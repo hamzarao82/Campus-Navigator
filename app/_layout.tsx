@@ -1,24 +1,37 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { useEffect } from "react";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useFrameworkReady } from "@/hooks/useFrameworkReady";
+import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_700Bold } from "@expo-google-fonts/poppins";
+import { ActivityIndicator } from "react-native";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  useFrameworkReady();
+
+  // Load fonts
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_700Bold,
+  });
+
+  // Show loader until fonts are ready
+  if (!fontsLoaded) {
+    return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          // 👇 Apply global Poppins font to headers & text
+          headerTitleStyle: { fontFamily: "Poppins_500Medium" },
+        }}
+      >
+        <Stack.Screen name="intro" />
       </Stack>
       <StatusBar style="auto" />
-    </ThemeProvider>
+    </>
   );
 }
