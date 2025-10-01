@@ -7,7 +7,7 @@ export default function StartScreen() {
   const router = useRouter();
 
   const handleGetStarted = () => {
-    router.replace("");
+    router.replace("/login");
   };
 
   return (
