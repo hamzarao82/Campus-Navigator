@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useFrameworkReady } from "@/hooks/useFrameworkReady";
+import { useFrameworkReady } from "../hooks/useFrameworkReady";
 import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { ActivityIndicator } from "react-native";
 
@@ -30,6 +30,8 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="intro" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="signup" />
       </Stack>
       <StatusBar style="auto" />
     </>
