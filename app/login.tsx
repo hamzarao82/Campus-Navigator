@@ -8,6 +8,8 @@ import {
   Platform,
   ScrollView,
   Image,
+  Modal,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -20,7 +22,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
+  const [modalVisible, setModalVisible] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
@@ -74,23 +77,23 @@ export default function LoginScreen() {
             <Text style={tw`text-sm font-medium text-gray-700 mb-1`}>
               Password
             </Text>
-           <View style={tw`flex-row items-center bg-gray-100 rounded-xl px-4`}>
-    <TextInput
-      style={tw`flex-1 py-3`}
-      placeholder="Enter your password"
-      placeholderTextColor={"#999"}
-      secureTextEntry={!showPassword}
-      value={password}
-      onChangeText={setPassword}
-    />
-    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-      <Ionicons
-        name={showPassword ? "eye-off-outline" : "eye-outline"}
-        size={20}
-        color="#2563EB"
-      />
-    </TouchableOpacity>
-  </View>
+            <View style={tw`flex-row items-center bg-gray-100 rounded-xl px-4`}>
+              <TextInput
+                style={tw`flex-1 py-3`}
+                placeholder="Enter your password"
+                placeholderTextColor={"#999"}
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color="#2563EB"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Remember Me + Forgot Password */}
@@ -107,7 +110,7 @@ export default function LoginScreen() {
               <Text style={tw`ml-2 text-sm text-gray-700`}>Remember Me</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => alert("Forgot Password flow")}>
+            <TouchableOpacity onPress={() => setModalVisible(true)}>
               <Text style={tw`text-sm text-blue-600 font-medium`}>
                 Forgot Password?
               </Text>
@@ -134,8 +137,78 @@ export default function LoginScreen() {
               <Text style={tw`text-blue-600 font-semibold`}>Sign Up</Text>
             </Text>
           </TouchableOpacity>
+
+          {/* Footer Role Buttons */}
+          <View style={tw`mt-10 flex-row justify-around`}>
+            <TouchableOpacity
+              style={tw`bg-blue-600 px-5 py-3 rounded-xl`}
+              onPress={() => router.replace("/dashboards/admin")}
+            >
+              <Text style={tw`text-white font-semibold`}>Admin</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={tw`bg-blue-600 px-5 py-3 rounded-xl`}
+              onPress={() => router.replace("/dashboards/faculty")}
+            >
+              <Text style={tw`text-white font-semibold`}>Faculty</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={tw`bg-blue-600 px-5 py-3 rounded-xl`}
+              onPress={() => router.replace("/dashboards/student")}
+            >
+              <Text style={tw`text-white font-semibold`}>Student</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Forgot Password Modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={tw`flex-1 justify-center items-center bg-black/50`}>
+          <View style={tw`bg-white p-6 rounded-2xl w-80`}>
+            <Text style={tw`text-lg font-semibold mb-3 text-blue-600`}>
+              Reset Password
+            </Text>
+            <Text style={tw`text-sm text-gray-600 mb-4`}>
+              Enter your email address to receive a password reset link.
+            </Text>
+
+            <TextInput
+              style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-4`}
+              placeholder="Enter your email"
+              placeholderTextColor={"#999"}
+              keyboardType="email-address"
+              value={resetEmail}
+              onChangeText={setResetEmail}
+            />
+
+            <TouchableOpacity
+              style={tw`bg-blue-600 py-3 rounded-xl mb-3`}
+              onPress={() => {
+                Alert.alert("Password reset link sent!");
+                setModalVisible(false);
+              }}
+            >
+              <Text style={tw`text-white text-center font-semibold`}>
+                Send Reset Link
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text style={tw`text-center text-gray-600 font-medium`}>
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
