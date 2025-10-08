@@ -107,7 +107,7 @@ export default function AdminDashboard() {
         </View>
 
         <TouchableOpacity
-          style={tw`p-3 rounded-xl bg-red-100`}
+          style={tw`p-3 rounded-xl bg-transparent`}
           onPress={handleSignOut}
         >
           {isLoading ? (

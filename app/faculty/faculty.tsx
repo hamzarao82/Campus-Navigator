@@ -61,7 +61,7 @@ export default function FacultyDashboard() {
           <Text style={tw`text-base text-gray-500`}>Welcome back!</Text>
         </View>
 
-        <TouchableOpacity style={tw`p-3 rounded-xl bg-red-100`} onPress={handleSignOut}>
+        <TouchableOpacity style={tw`p-3 rounded-xl bg-transparent`} onPress={handleSignOut}>
           <Feather name="log-out" size={22} color="#dc2626" />
         </TouchableOpacity>
       </View>

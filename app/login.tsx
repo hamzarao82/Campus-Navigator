@@ -142,21 +142,21 @@ export default function LoginScreen() {
           <View style={tw`mt-10 flex-row justify-around`}>
             <TouchableOpacity
               style={tw`bg-blue-600 px-5 py-3 rounded-xl`}
-              onPress={() => router.replace("/dashboards/admin")}
+              onPress={() => router.replace("/admin/admin")}
             >
               <Text style={tw`text-white font-semibold`}>Admin</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={tw`bg-blue-600 px-5 py-3 rounded-xl`}
-              onPress={() => router.replace("/dashboards/faculty")}
+              onPress={() => router.replace("/faculty/faculty")}
             >
               <Text style={tw`text-white font-semibold`}>Faculty</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={tw`bg-blue-600 px-5 py-3 rounded-xl`}
-              onPress={() => router.replace("/dashboards/student")}
+              onPress={() => router.replace("/student/student")}
             >
               <Text style={tw`text-white font-semibold`}>Student</Text>
             </TouchableOpacity>

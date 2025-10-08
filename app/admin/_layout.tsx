@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { useFrameworkReady } from "@/hooks/useFrameworkReady";
+import { useFrameworkReady } from "../../hooks/useFrameworkReady";
 import { StackScreen } from "react-native-screens";
 
 export default function RootLayout() {
@@ -8,8 +8,6 @@ export default function RootLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="admin" />
-      <Stack.Screen name="faculty" />
-      <Stack.Screen name="student" />
     </Stack>
   );
 }
