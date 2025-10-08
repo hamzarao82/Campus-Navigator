@@ -29,7 +29,7 @@ export default function StudentDashboard() {
     },
     {
       title: "Notifications",
-      route: "/student/student-notifications",
+      route: "/student/student-notification",
       icon: "notifications-outline",
       description: "View important announcements",
     },
