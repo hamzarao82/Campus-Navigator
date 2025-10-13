@@ -33,8 +33,8 @@ export default function StudentNotificationsScreen() {
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
       {/* Header */}
-      <View style={tw`flex-row items-center px-5 py-4 border-b border-gray-200`}>
-        <TouchableOpacity style={tw`p-2 rounded-full bg-gray-100 mr-3`}
+      <View style={tw`flex-row items-center px-5 py-4`}>
+        <TouchableOpacity style={tw`p-2 rounded-full bg-transparent mr-3`}
         onPress={() => router.back()}>
           <Feather name="arrow-left" size={22} color="#1f2937" />
         </TouchableOpacity>

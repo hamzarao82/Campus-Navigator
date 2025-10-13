@@ -107,12 +107,12 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
       {/* Header */}
-      <View style={tw`flex-row items-center p-5 pb-3 border-b border-gray-200`}>
+      <View style={tw`flex-row items-center p-5 pb-3`}>
         <TouchableOpacity
-          style={tw`w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-3`}
+          style={tw`w-10 h-10 rounded-full bg-transparent items-center justify-center mr-3`}
           onPress={() => router.back()}
         >
-          <Ionicons name="chevron-back" size={22} color="#000" />
+          <Ionicons name="chevron-back" size={22} color="#260f8eff" />
         </TouchableOpacity>
         <Text style={tw`text-xl font-semibold text-gray-900`}>
           System Settings
