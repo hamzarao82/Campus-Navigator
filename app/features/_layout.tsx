@@ -7,8 +7,11 @@ export default function RootLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="faculty-dashboard" />
-      <Stack.Screen name="faculty-profile" />
+      <Stack.Screen name="course-schedule" />
+      <Stack.Screen name="manage-poi" />
+      <Stack.Screen name="notifications" />
+      <Stack.Screen name="settings" />
+      <Stack.Screen name="maps" />
     </Stack>
   );
 }

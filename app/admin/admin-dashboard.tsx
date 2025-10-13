@@ -18,14 +18,14 @@ export default function AdminDashboard() {
   const menuItems = [
     {
       title: "Campus Map",
-      route: "/features/map",
+      route: "/features/maps",
       iconLib: Ionicons,
       iconName: "map-outline",
       description: "Navigate through campus",
     },
     {
       title: "User Permission",
-      route: "/features/permissions",
+      route: "/admin/user-permission",
       iconLib: Feather,
       iconName: "users",
       description: "Manage user roles and access rights",
@@ -39,7 +39,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Map Updates",
-      route: "/features/map-updates",
+      route: "/admin/map-updates",
       iconLib: MaterialCommunityIcons,
       iconName: "map-marker-plus-outline",
       description: "Update campus map and locations",
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Student Timetable",
-      route: "/features/timetable",
+      route: "/admin/student-timetable",
       iconLib: Feather,
       iconName: "clock",
       description: "View and modify student schedules",
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Profile",
-      route: "/features/profile",
+      route: "/admin/admin-profile",
       iconLib: Feather,
       iconName: "user",
       description: "View and update your profile information",
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
     <SafeAreaView style={tw`flex-1 bg-white`}>
       {/* Header */}
       <View
-        style={tw`flex-row justify-between items-center px-6 pt-4 pb-4 border-b border-gray-200`}
+        style={tw`flex-row justify-between items-center px-6 pt-4 pb-4`}
       >
         <View>
           <Text style={tw`text-3xl font-bold text-blue-700`}>

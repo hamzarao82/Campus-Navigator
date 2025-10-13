@@ -11,7 +11,7 @@ export default function StudentDashboard() {
   const menuItems = [
     {
       title: "Campus Map",
-      route: "/features/map",
+      route: "/features/maps",
       icon: "map-outline",
       description: "Navigate through campus",
     },
@@ -39,6 +39,12 @@ export default function StudentDashboard() {
       icon: "person-outline",
       description: "Manage your account",
     },
+    {
+      title: "Setting",
+      route: "/features/settings",
+      icon: "settings-outline",
+      description: "System configuration",
+    }
   ];
 
   return (
@@ -47,7 +53,7 @@ export default function StudentDashboard() {
         {/* Header */}
         <View style={tw`flex-row justify-between items-center mb-8`}>
           <View>
-            <Text style={tw`text-3xl font-bold text-gray-800`}>
+            <Text style={tw`text-3xl font-bold text-blue-600`}>
               Student Dashboard
             </Text>
             <Text style={tw`text-base text-gray-500 mt-1`}>

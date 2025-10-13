@@ -11,7 +11,7 @@ export default function FacultyDashboard() {
   const menuItems = [
     {
       title: "Campus Map",
-      route: "/features/map",
+      route: "/features/maps",
       icon: <Ionicons name="map-outline" size={22} color="#2563EB" />,
       description: "View campus layout",
     },
@@ -23,7 +23,7 @@ export default function FacultyDashboard() {
     },
     {
       title: "Course Management",
-      route: "/features/courses",
+      route: "/features/course-schedule",
       icon: <MaterialCommunityIcons name="book-open-outline" size={22} color="#2563EB" />,
       description: "Manage your courses",
     },
@@ -35,9 +35,15 @@ export default function FacultyDashboard() {
     },
     {
       title: "Profile",
-      route: "/features/profile",
+      route: "/faculty/faculty-profile",
       icon: <Feather name="user" size={22} color="#2563EB" />,
       description: "Update your profile",
+    },
+    {
+      title: "Setting",
+      route: "/features/settings",
+      icon: <Feather name="settings" size={22} color="#2563EB" />,
+      description: "System configuration",
     },
   ];
 
@@ -55,7 +61,7 @@ export default function FacultyDashboard() {
       <StatusBar barStyle="dark-content" backgroundColor="white" />
 
       {/* Header */}
-      <View style={tw`flex-row justify-between items-center px-6 pb-4 border-b border-gray-200`}>
+      <View style={tw`flex-row justify-between items-center px-6 pb-4`}>
         <View>
           <Text style={tw`text-3xl font-bold text-blue-700`}>Faculty Dashboard</Text>
           <Text style={tw`text-base text-gray-500`}>Welcome back!</Text>
