@@ -34,7 +34,9 @@ const Icons = {
   Current: '📡',
   List: '📋',
   Position: '📍',
-  Exit: '🚪'
+  Exit: '🚪',
+  Play: '▶️',
+  Stop: '⏹️'
 };
 
 export default function MapNavigation() {
@@ -55,6 +57,8 @@ export default function MapNavigation() {
   const [realTimeTracking, setRealTimeTracking] = useState(false);
   const [heading, setHeading] = useState(0);
   const [navigationStarted, setNavigationStarted] = useState(false);
+  const [currentDistance, setCurrentDistance] = useState(null);
+  const [currentDuration, setCurrentDuration] = useState(null);
   
   const mapRef = useRef(null);
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
@@ -85,7 +89,6 @@ export default function MapNavigation() {
     ]).start();
   }, [drawerOpen]);
 
-  // FIXED: Better real-time tracking management
   useEffect(() => {
     if (realTimeTracking && selectedPOI && routeData) {
       console.log('Starting real-time tracking...');
@@ -102,7 +105,6 @@ export default function MapNavigation() {
 
   const startRealTimeTracking = async () => {
     try {
-      // Stop any existing tracking first
       stopRealTimeTracking();
 
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -131,7 +133,6 @@ export default function MapNavigation() {
           setLocation(newCoords);
           setHeading(newLocation.coords.heading || 0);
 
-          // Recalculate route with new position
           if (selectedPOI) {
             calculateRoute(
               { latitude: newCoords.latitude, longitude: newCoords.longitude },
@@ -140,7 +141,6 @@ export default function MapNavigation() {
             );
           }
 
-          // Update map camera for smooth following
           if (mapRef.current && navigationStarted) {
             mapRef.current.animateCamera({
               center: newCoords,
@@ -277,14 +277,17 @@ export default function MapNavigation() {
         longitude: coord[0],
       }));
 
-      setRouteData({
+      const routeInfo = {
         coordinates,
         distance: (route.distance / 1000).toFixed(2),
         duration: Math.round(route.duration / 60),
         steps: route.legs[0].steps,
-      });
+      };
 
-      // Only fit to coordinates if not in real-time tracking mode
+      setRouteData(routeInfo);
+      setCurrentDistance(routeInfo.distance);
+      setCurrentDuration(routeInfo.duration);
+
       if (!realTimeTracking && mapRef.current) {
         mapRef.current.fitToCoordinates([origin, destination], {
           edgePadding: { top: 100, right: 50, bottom: 300, left: 50 },
@@ -315,18 +318,10 @@ export default function MapNavigation() {
     setSearchResults([]);
     setSearchQuery('');
     
-    // Calculate route first, then start real-time tracking
-    const routeSuccess = await calculateRoute(
+    await calculateRoute(
       { latitude: location.latitude, longitude: location.longitude },
       { latitude: poi.latitude, longitude: poi.longitude }
     );
-
-    if (routeSuccess) {
-      // Start real-time tracking after route is calculated
-      setRealTimeTracking(true);
-    } else {
-      Alert.alert('Navigation Error', 'Could not calculate route to destination');
-    }
   };
 
   const startNavigation = async () => {
@@ -345,15 +340,11 @@ export default function MapNavigation() {
     }
   };
 
-  // FIXED: Proper exit navigation function
   const exitNavigation = () => {
     console.log('Exit navigation called');
-    // First stop real-time tracking
     stopRealTimeTracking();
-    // Then reset the state
     setRealTimeTracking(false);
     setNavigationStarted(false);
-    // Don't clear selectedPOI and routeData immediately to show the route
     console.log('Navigation exited successfully');
   };
 
@@ -363,6 +354,8 @@ export default function MapNavigation() {
     setRouteData(null);
     setRealTimeTracking(false);
     setNavigationStarted(false);
+    setCurrentDistance(null);
+    setCurrentDuration(null);
     stopRealTimeTracking();
   };
 
@@ -582,32 +575,8 @@ export default function MapNavigation() {
         <Text style={tw`text-2xl text-white`}>{drawerOpen ? Icons.Close : Icons.List}</Text>
       </TouchableOpacity>
 
-      {/* Current Location Button */}
-      <TouchableOpacity 
-        onPress={getCurrentLocation}
-        style={tw`absolute top-30 left-5 w-12 h-12 bg-white rounded-full justify-center items-center shadow-lg z-10`}
-      >
-        <Text style={tw`text-2xl text-white`}>{Icons.Current}</Text>
-      </TouchableOpacity>
-
-      {/* Bottom Right Buttons Container */}
+      {/* Bottom Right Position Button */}
       <View style={tw`absolute bottom-30 right-5 z-10`}>
-        {/* Navigation Toggle Button - ABOVE the location button */}
-        {selectedPOI && routeData && (
-          <TouchableOpacity 
-            onPress={realTimeTracking ? exitNavigation : startNavigation}
-            style={[
-              tw`w-14 h-14 rounded-full justify-center items-center shadow-lg mb-3`,
-              realTimeTracking ? tw`bg-red-500` : tw`bg-green-500`
-            ]}
-          >
-            <Text style={tw`text-2xl text-white`}>
-              {realTimeTracking ? Icons.Exit : Icons.Navigation}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Position Button at Bottom - BELOW the navigation button */}
         <TouchableOpacity 
           onPress={getCurrentLocation}
           style={tw`w-14 h-14 bg-blue-500 rounded-full justify-center items-center shadow-lg`}
@@ -732,8 +701,8 @@ export default function MapNavigation() {
         </>
       )}
 
-      {/* Bottom Panel */}
-      {selectedPOI && routeData && (
+      {/* Bottom Panel - Route Info with Start Navigation Button (NOT ACTIVE) */}
+      {selectedPOI && routeData && !realTimeTracking && (
         <View style={tw`absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-10 p-5`}>
           <View style={tw`flex-row justify-between items-start mb-4`}>
             <View style={tw`flex-row items-start flex-1 mr-3`}>
@@ -742,12 +711,7 @@ export default function MapNavigation() {
                 <Text style={tw`text-lg font-bold text-gray-800 mb-1`} numberOfLines={1}>
                   {selectedPOI.name}
                 </Text>
-                {realTimeTracking && navigationStarted && (
-                  <View style={tw`flex-row items-center mt-1`}>
-                    <View style={tw`w-2 h-2 bg-green-500 rounded-full mr-1.5`} />
-                    <Text style={tw`text-xs text-green-600 font-semibold`}>Live Navigation Active</Text>
-                  </View>
-                )}
+                <Text style={tw`text-xs text-gray-500`}>Ready to navigate</Text>
               </View>
             </View>
             <TouchableOpacity onPress={clearRoute} style={tw`px-4 py-2.5 bg-gray-100 rounded-xl`}>
@@ -755,7 +719,7 @@ export default function MapNavigation() {
             </TouchableOpacity>
           </View>
 
-          <View style={tw`flex-row justify-around py-4 bg-gray-50 rounded-2xl`}>
+          <View style={tw`flex-row justify-around py-4 bg-gray-50 rounded-2xl mb-4`}>
             <View style={tw`items-center gap-1.5`}>
               <Text style={tw`text-2xl`}>{Icons.Distance}</Text>
               <Text style={tw`text-xs text-gray-600 font-medium`}>Distance</Text>
@@ -769,7 +733,81 @@ export default function MapNavigation() {
             </View>
           </View>
 
+          {/* Start Navigation Button */}
+          <TouchableOpacity 
+            onPress={startNavigation}
+            style={tw`bg-green-500 rounded-xl py-4 flex-row justify-center items-center shadow-lg`}
+          >
+            <Text style={tw`text-white text-2xl mr-3`}>{Icons.Navigation}</Text>
+            <Text style={tw`text-white text-lg font-bold`}>Start Navigation</Text>
+          </TouchableOpacity>
+
           {loading && <ActivityIndicator style={tw`mt-3`} size="small" color="#2196F3" />}
+        </View>
+      )}
+
+      {/* Bottom Panel - Real-Time Navigation (ACTIVE) - Google Maps Style */}
+      {selectedPOI && routeData && realTimeTracking && (
+        <View style={tw`absolute bottom-0 left-0 right-0 bg-blue-600 shadow-2xl z-10`}>
+          {/* Compact Navigation Bar */}
+          <View style={tw`px-5 py-4`}>
+            {/* Top Row - Destination and Exit */}
+            <View style={tw`flex-row justify-between items-center mb-3`}>
+              <View style={tw`flex-row items-center flex-1 mr-3`}>
+                <View style={tw`w-10 h-10 bg-white/20 rounded-full justify-center items-center mr-3`}>
+                  <Text style={tw`text-xl`}>{Icons.Pin}</Text>
+                </View>
+                <View style={tw`flex-1`}>
+                  <Text style={tw`text-base font-bold text-white`} numberOfLines={1}>
+                    {selectedPOI.name}
+                  </Text>
+                  <View style={tw`flex-row items-center mt-1`}>
+                    <View style={tw`w-2 h-2 bg-green-400 rounded-full mr-1.5`} />
+                    <Text style={tw`text-xs text-white/80`}>Live tracking</Text>
+                  </View>
+                </View>
+              </View>
+              <TouchableOpacity 
+                onPress={exitNavigation}
+                style={tw`w-10 h-10 bg-red-500 rounded-full justify-center items-center`}
+              >
+                <Text style={tw`text-lg text-white`}>{Icons.Exit}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Bottom Row - Live Stats */}
+            <View style={tw`flex-row items-center justify-around bg-white/10 rounded-xl py-3`}>
+              <View style={tw`items-center flex-1`}>
+                <Text style={tw`text-2xl font-bold text-white`}>
+                  {currentDistance || routeData.distance}
+                </Text>
+                <Text style={tw`text-xs text-white/70 mt-1`}>km remaining</Text>
+              </View>
+              
+              <View style={tw`w-px h-10 bg-white/20`} />
+              
+              <View style={tw`items-center flex-1`}>
+                <Text style={tw`text-2xl font-bold text-white`}>
+                  {currentDuration || routeData.duration}
+                </Text>
+                <Text style={tw`text-xs text-white/70 mt-1`}>min ETA</Text>
+              </View>
+              
+              <View style={tw`w-px h-10 bg-white/20`} />
+              
+              <TouchableOpacity 
+                onPress={getCurrentLocation}
+                style={tw`items-center flex-1`}
+              >
+                <View style={tw`w-10 h-10 bg-white/20 rounded-full justify-center items-center`}>
+                  <Text style={tw`text-xl text-white`}>{Icons.Current}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Indicator that navigation is active */}
+          <View style={tw`h-1 bg-green-400`} />
         </View>
       )}
 
