@@ -55,8 +55,7 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Campus Navigator to access your location for campus navigation and real-time directions."
         }
-      ],
-      "@maplibre/maplibre-react-native"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
