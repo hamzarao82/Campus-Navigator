@@ -1,66 +1,171 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import tw from 'twrnc';
-import { Ionicons, MaterialCommunityIcons, Feather, FontAwesome } from '@expo/vector-icons';
+import { Ionicons, Feather, FontAwesome } from '@expo/vector-icons';
+import { auth, db } from '../../firebaseConfig';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  orderBy,
+  serverTimestamp,
+  Timestamp,
+} from 'firebase/firestore';
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  recipients: 'all' | 'student' | 'faculty';
+  createdAt: Timestamp;
+  createdBy: string;
+  time?: string;
+}
 
 export default function NotificationsScreen() {
   const router = useRouter();
 
   const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
-  const [selectedRecipient, setSelectedRecipient] = useState('all');
+  const [selectedRecipient, setSelectedRecipient] = useState<'all' | 'student' | 'faculty'>('all');
   const [isSending, setIsSending] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [recentNotifications, setRecentNotifications] = useState([
-    {
-      id: '1',
-      title: 'System Maintenance',
-      message: 'Scheduled downtime tonight at 11 PM.',
-      recipients: 'all',
-      status: 'Sent',
-      timestamp: 'Oct 11, 2025, 8:00 PM',
-    },
-    {
-      id: '2',
-      title: 'Faculty Meeting',
-      message: 'Reminder: Department meeting tomorrow at 10 AM.',
-      recipients: 'faculty',
-      status: 'Sent',
-      timestamp: 'Oct 10, 2025, 9:15 AM',
-    },
-  ]);
+  const [recentNotifications, setRecentNotifications] = useState<Notification[]>([]);
 
-  const handleSendNotification = () => {
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const notificationsRef = collection(db, 'notifications');
+      const q = query(notificationsRef, orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+
+      const notificationsData: Notification[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        notificationsData.push({
+          id: doc.id,
+          title: data.title,
+          message: data.message,
+          recipients: data.recipients,
+          createdAt: data.createdAt,
+          createdBy: data.createdBy,
+          time: data.time || formatTimestamp(data.createdAt),
+        });
+      });
+
+      setRecentNotifications(notificationsData);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      Alert.alert('Error', 'Failed to fetch notifications');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const formatTimestamp = (timestamp: any) => {
+    if (!timestamp) return 'Just now';
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+    } catch (error) {
+      return 'Recently';
+    }
+  };
+
+  const handleSendNotification = async () => {
     if (!notificationTitle || !notificationMessage) {
-      alert('Please fill in both title and message.');
+      Alert.alert('Missing Fields', 'Please fill in both title and message.');
       return;
     }
-    setIsSending(true);
-    setTimeout(() => {
-      const newNotification = {
-        id: Date.now().toString(),
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      Alert.alert('Error', 'You must be logged in to send notifications');
+      return;
+    }
+
+    try {
+      setIsSending(true);
+
+      // Add notification to Firestore
+      await addDoc(collection(db, 'notifications'), {
         title: notificationTitle,
         message: notificationMessage,
         recipients: selectedRecipient,
-        status: 'Sent',
-        timestamp: new Date().toLocaleString(),
-      };
-      setRecentNotifications([newNotification, ...recentNotifications]);
+        createdAt: serverTimestamp(),
+        createdBy: currentUser.uid,
+        time: new Date().toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        }),
+      });
+
+      Alert.alert('Success', 'Notification sent successfully!');
+
+      // Reset form
       setNotificationTitle('');
       setNotificationMessage('');
       setSelectedRecipient('all');
+
+      // Refresh notifications list
+      fetchNotifications();
+    } catch (error: any) {
+      console.error('Error sending notification:', error);
+      Alert.alert('Error', `Failed to send notification: ${error.message || 'Unknown error'}`);
+    } finally {
       setIsSending(false);
-      alert('Notification sent successfully!');
-    }, 1000);
+    }
   };
 
   const getRecipientLabel = (type: string) => {
     switch (type) {
-      case 'student': return 'Students';
-      case 'faculty': return 'Faculty';
-      default: return 'All Users';
+      case 'student':
+        return 'Students';
+      case 'faculty':
+        return 'Faculty';
+      default:
+        return 'All Users';
+    }
+  };
+
+  const getRecipientColor = (type: string) => {
+    switch (type) {
+      case 'student':
+        return 'bg-green-100 text-green-700';
+      case 'faculty':
+        return 'bg-blue-100 text-blue-700';
+      default:
+        return 'bg-purple-100 text-purple-700';
     }
   };
 
@@ -74,13 +179,27 @@ export default function NotificationsScreen() {
         >
           <Ionicons name="chevron-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={tw`text-2xl font-bold text-gray-900`}>Notifications</Text>
+        <Text style={tw`text-2xl font-bold text-gray-900`}>Send Notifications</Text>
       </View>
 
-      <ScrollView style={tw`flex-1 px-6`} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={tw`flex-1 px-6`}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              fetchNotifications();
+            }}
+          />
+        }
+      >
         {/* Compose Card */}
         <View style={tw`bg-white rounded-2xl shadow p-4 mb-6 border border-gray-100`}>
-          <Text style={tw`text-lg font-semibold text-gray-900 mb-4`}>Send New Notification</Text>
+          <Text style={tw`text-lg font-semibold text-gray-900 mb-4`}>
+            Send New Notification
+          </Text>
 
           {/* Title */}
           <Text style={tw`text-sm font-medium text-gray-800 mb-2`}>Title</Text>
@@ -107,7 +226,7 @@ export default function NotificationsScreen() {
           {/* Recipients */}
           <Text style={tw`text-sm font-medium text-gray-800 mb-2`}>Recipients</Text>
           <View style={tw`flex-row mb-4`}>
-            {['all', 'student', 'faculty'].map((type) => (
+            {(['all', 'student', 'faculty'] as const).map((type) => (
               <TouchableOpacity
                 key={type}
                 style={tw.style(
@@ -148,15 +267,31 @@ export default function NotificationsScreen() {
         </View>
 
         {/* Recent Notifications */}
-        <Text style={tw`text-xl font-semibold text-gray-900 mb-4`}>Recent Notifications</Text>
+        <Text style={tw`text-xl font-semibold text-gray-900 mb-4`}>
+          Recent Notifications ({recentNotifications.length})
+        </Text>
 
-        {recentNotifications.length === 0 ? (
-          <Text style={tw`text-center text-gray-500 mb-4`}>
-            No recent notifications to display.
-          </Text>
+        {loading ? (
+          <View style={tw`items-center justify-center py-10`}>
+            <ActivityIndicator size="large" color="#2563EB" />
+            <Text style={tw`text-gray-500 mt-4`}>Loading notifications...</Text>
+          </View>
+        ) : recentNotifications.length === 0 ? (
+          <View style={tw`items-center justify-center py-10`}>
+            <Ionicons name="notifications-off-outline" size={48} color="#9CA3AF" />
+            <Text style={tw`text-center text-gray-500 mt-4`}>
+              No notifications sent yet.
+            </Text>
+            <Text style={tw`text-center text-gray-400 text-sm mt-1`}>
+              Send your first notification above!
+            </Text>
+          </View>
         ) : (
           recentNotifications.map((notification) => (
-            <View key={notification.id} style={tw`bg-white rounded-2xl shadow p-4 mb-4 border border-gray-100`}>
+            <View
+              key={notification.id}
+              style={tw`bg-white rounded-2xl shadow p-4 mb-4 border border-gray-100`}
+            >
               {/* Header */}
               <View style={tw`flex-row items-center mb-3`}>
                 <View style={tw`w-12 h-12 rounded-full bg-blue-100 items-center justify-center mr-3`}>
@@ -166,9 +301,13 @@ export default function NotificationsScreen() {
                   <Text style={tw`text-base font-semibold text-gray-900`}>
                     {notification.title}
                   </Text>
-                  <View style={tw`bg-green-100 px-2 py-1 rounded-full self-start mt-1`}>
-                    <Text style={tw`text-green-700 text-xs font-medium`}>
-                      {notification.status}
+                  <View
+                    style={tw`px-2 py-1 rounded-full self-start mt-1 ${getRecipientColor(
+                      notification.recipients
+                    )}`}
+                  >
+                    <Text style={tw`text-xs font-medium`}>
+                      {getRecipientLabel(notification.recipients)}
                     </Text>
                   </View>
                 </View>
@@ -180,19 +319,11 @@ export default function NotificationsScreen() {
               </Text>
 
               {/* Info */}
-              <View style={tw`flex-row justify-between`}>
-                <View style={tw`flex-row items-center`}>
-                  <FontAwesome name="users" size={14} color="#6B7280" />
-                  <Text style={tw`text-gray-500 text-sm ml-2`}>
-                    {getRecipientLabel(notification.recipients)}
-                  </Text>
-                </View>
-                <View style={tw`flex-row items-center`}>
-                  <Feather name="clock" size={14} color="#6B7280" />
-                  <Text style={tw`text-gray-500 text-sm ml-2`}>
-                    {notification.timestamp}
-                  </Text>
-                </View>
+              <View style={tw`flex-row items-center`}>
+                <Feather name="clock" size={14} color="#6B7280" />
+                <Text style={tw`text-gray-500 text-sm ml-2`}>
+                  {notification.time}
+                </Text>
               </View>
             </View>
           ))

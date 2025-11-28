@@ -4,9 +4,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import tw from "twrnc";
 import { Ionicons, Feather } from "@expo/vector-icons";
+import { auth } from "../../firebaseConfig";
+import { signOut } from "firebase/auth";
 
 export default function StudentDashboard() {
   const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.replace("/login");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      alert("Failed to sign out. Please try again.");
+    }
+  };
 
   const menuItems = [
     {
@@ -35,7 +47,7 @@ export default function StudentDashboard() {
     },
     {
       title: "Profile",
-      route: "/student/student-profile", 
+      route: "/student/student-profile",
       icon: "person-outline",
       description: "Manage your account",
     },
@@ -64,7 +76,7 @@ export default function StudentDashboard() {
           {/* Sign Out */}
           <TouchableOpacity
             style={tw`p-3 rounded-xl bg-transparent`}
-            onPress={() => router.replace("/login")}
+            onPress={handleSignOut}
           >
             <Feather name="log-out" size={22} color="#dc2626" />
           </TouchableOpacity>

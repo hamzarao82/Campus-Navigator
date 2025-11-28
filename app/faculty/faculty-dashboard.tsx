@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import tw from "twrnc";
+import { auth } from "../../firebaseConfig";
+import { signOut } from "firebase/auth";
 
 export default function FacultyDashboard() {
   const router = useRouter();
@@ -47,8 +49,14 @@ export default function FacultyDashboard() {
     },
   ];
 
-  const handleSignOut = () => {
-    router.replace("/login");
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.replace("/login");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      alert("Failed to sign out. Please try again.");
+    }
   };
 
   return (

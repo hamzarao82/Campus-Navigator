@@ -10,6 +10,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import tw from "twrnc";
+import { auth } from "../../firebaseConfig";
+import { signOut } from "firebase/auth";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -84,10 +86,13 @@ export default function AdminDashboard() {
   const handleSignOut = async () => {
     setIsLoading(true);
     try {
-      // Replace with your own logout logic if needed
+      // Sign out from Firebase
+      await signOut(auth);
+      // Redirect to login
       router.replace("/login");
     } catch (error) {
       console.error("Sign out error:", error);
+      alert("Failed to sign out. Please try again.");
     } finally {
       setIsLoading(false);
     }

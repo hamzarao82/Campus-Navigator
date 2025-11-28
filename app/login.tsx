@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,20 +10,158 @@ import {
   Image,
   Modal,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import tw from "twrnc";
+import { auth, db } from "../firebaseConfig";
+import {
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  User
+} from "firebase/auth";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc
+} from "firebase/firestore";
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // ✅ Check Firebase auth state on mount
+  useEffect(() => {
+    let isMounted = true;
+
+    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
+      if (!isMounted || !user) return;
+
+      try {
+        // Fetch user role from Firestore using direct document access
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+
+          // Redirect based on role
+          if (userData.role === "student") {
+            router.replace("/student/student-dashboard");
+          } else if (userData.role === "faculty") {
+            router.replace("/faculty/faculty-dashboard");
+          } else if (userData.role === "admin") {
+            router.replace("/admin/admin-dashboard");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Missing Fields", "Please enter both email and password.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Sign in with Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Fetch user role from Firestore using direct document access
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        Alert.alert("Error", "User data not found in database");
+        await auth.signOut();
+        return;
+      }
+
+      const userData = userDoc.data();
+
+      // Redirect based on role
+      if (userData.role === "student") {
+        router.replace("/student/student-dashboard");
+      } else if (userData.role === "faculty") {
+        router.replace("/faculty/faculty-dashboard");
+      } else if (userData.role === "admin") {
+        router.replace("/admin/admin-dashboard");
+      } else {
+        Alert.alert("Error", "Invalid user role");
+        await auth.signOut();
+      }
+    } catch (error: any) {
+      console.error("Login error:", error);
+
+      // Handle specific Firebase errors
+      if (error.code === "auth/invalid-credential") {
+        Alert.alert("Login Failed", "Invalid email or password");
+      } else if (error.code === "auth/user-not-found") {
+        Alert.alert("Login Failed", "No account found with this email");
+      } else if (error.code === "auth/wrong-password") {
+        Alert.alert("Login Failed", "Incorrect password");
+      } else if (error.code === "auth/too-many-requests") {
+        Alert.alert(
+          "Too Many Attempts",
+          "Account temporarily disabled. Please try again later or reset your password."
+        );
+      } else {
+        Alert.alert("Login Failed", error?.message || "An error occurred");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Firebase password reset
+  const handlePasswordReset = async () => {
+    if (!resetEmail) {
+      Alert.alert("Missing Email", "Please enter your email address");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      Alert.alert(
+        "Password Reset",
+        "Password reset link has been sent to your email. Please check your inbox."
+      );
+      setModalVisible(false);
+      setResetEmail("");
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+
+      if (error.code === "auth/user-not-found") {
+        Alert.alert("Error", "No account found with this email");
+      } else if (error.code === "auth/invalid-email") {
+        Alert.alert("Error", "Invalid email address");
+      } else {
+        Alert.alert("Error", error?.message || "Failed to send reset link");
+      }
+    }
+  };
 
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
@@ -35,16 +173,7 @@ export default function LoginScreen() {
           contentContainerStyle={tw`flex-grow px-6 pb-6`}
           showsVerticalScrollIndicator={false}
         >
-          {/* Back button */}
-          <TouchableOpacity
-            style={tw`w-10 h-10 bg-transparent items-center justify-center mt-1`}
-            onPress={() => router.replace("/intro")}
-          >
-            <Ionicons name="chevron-back" size={22} color="#2252A2" />
-          </TouchableOpacity>
-
-          {/* Logo */}
-          <View style={tw`items-center mt-6 mb-10`}>
+          <View style={tw`items-center mt-10 mb-10`}>
             <Image
               source={require("../assets/images/login logo.png")}
               style={tw`w-28 h-28`}
@@ -52,19 +181,17 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Title */}
           <Text style={tw`text-2xl font-bold text-blue-600 mb-1`}>Login</Text>
           <Text style={tw`text-base text-black mb-8`}>
             Please sign in to continue
           </Text>
 
-          {/* Email Input */}
           <View style={tw`mb-4`}>
             <Text style={tw`text-sm font-medium text-gray-700 mb-1`}>Email</Text>
             <TextInput
               style={tw`bg-gray-100 rounded-xl px-4 py-3`}
               placeholder="Your email address"
-              placeholderTextColor={"#999"}
+              placeholderTextColor="#999"
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
@@ -72,16 +199,13 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Password Input */}
           <View style={tw`mb-4`}>
-            <Text style={tw`text-sm font-medium text-gray-700 mb-1`}>
-              Password
-            </Text>
+            <Text style={tw`text-sm font-medium text-gray-700 mb-1`}>Password</Text>
             <View style={tw`flex-row items-center bg-gray-100 rounded-xl px-4`}>
               <TextInput
                 style={tw`flex-1 py-3`}
                 placeholder="Enter your password"
-                placeholderTextColor={"#999"}
+                placeholderTextColor="#999"
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
@@ -96,38 +220,29 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          {/* Remember Me + Forgot Password */}
-          <View style={tw`flex-row justify-between items-center mb-6`}>
-            <TouchableOpacity
-              style={tw`flex-row items-center`}
-              onPress={() => setRememberMe(!rememberMe)}
-            >
-              <Ionicons
-                name={rememberMe ? "checkbox" : "square-outline"}
-                size={20}
-                color="#2563EB"
-              />
-              <Text style={tw`ml-2 text-sm text-gray-700`}>Remember Me</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setModalVisible(true)}>
-              <Text style={tw`text-sm text-blue-600 font-medium`}>
-                Forgot Password?
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Login Button */}
           <TouchableOpacity
-            style={tw`bg-blue-600 py-4 rounded-2xl`}
-            onPress={() => router.replace("")}
+            style={tw`mb-4 self-end`}
+            onPress={() => setModalVisible(true)}
           >
-            <Text style={tw`text-white text-center text-lg font-semibold`}>
-              Login
+            <Text style={tw`text-blue-600 font-medium text-sm`}>
+              Forgot Password?
             </Text>
           </TouchableOpacity>
 
-          {/* Signup link */}
+          <TouchableOpacity
+            style={tw`bg-blue-600 py-4 rounded-2xl`}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={tw`text-white text-center text-lg font-semibold`}>
+                Login
+              </Text>
+            )}
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={tw`mt-6 items-center`}
             onPress={() => router.replace("/signup")}
@@ -137,30 +252,6 @@ export default function LoginScreen() {
               <Text style={tw`text-blue-600 font-semibold`}>Sign Up</Text>
             </Text>
           </TouchableOpacity>
-
-          {/* Footer Role Buttons */}
-          <View style={tw`mt-10 flex-row justify-around`}>
-            <TouchableOpacity
-              style={tw`bg-blue-600 px-5 py-3 rounded-xl`}
-              onPress={() => router.replace("/admin/admin-dashboard")}
-            >
-              <Text style={tw`text-white font-semibold`}>Admin</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={tw`bg-blue-600 px-5 py-3 rounded-xl`}
-              onPress={() => router.replace("/faculty/faculty-dashboard")}
-            >
-              <Text style={tw`text-white font-semibold`}>Faculty</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={tw`bg-blue-600 px-5 py-3 rounded-xl`}
-              onPress={() => router.replace("/student/student-dashboard")}
-            >
-              <Text style={tw`text-white font-semibold`}>Student</Text>
-            </TouchableOpacity>
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -179,32 +270,24 @@ export default function LoginScreen() {
             <Text style={tw`text-sm text-gray-600 mb-4`}>
               Enter your email address to receive a password reset link.
             </Text>
-
             <TextInput
               style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-4`}
               placeholder="Enter your email"
-              placeholderTextColor={"#999"}
+              placeholderTextColor="#999"
               keyboardType="email-address"
               value={resetEmail}
               onChangeText={setResetEmail}
             />
-
             <TouchableOpacity
               style={tw`bg-blue-600 py-3 rounded-xl mb-3`}
-              onPress={() => {
-                Alert.alert("Password reset link sent!");
-                setModalVisible(false);
-              }}
+              onPress={handlePasswordReset}
             >
               <Text style={tw`text-white text-center font-semibold`}>
                 Send Reset Link
               </Text>
             </TouchableOpacity>
-
             <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={tw`text-center text-gray-600 font-medium`}>
-                Cancel
-              </Text>
+              <Text style={tw`text-center text-gray-600 font-medium`}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
