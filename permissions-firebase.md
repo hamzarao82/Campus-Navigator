@@ -350,6 +350,121 @@ service firebase.storage {
 3. **POIs** - All authenticated users can read, only admin/faculty can modify
 4. **Courses** - Students can increment enrollment count
 
+### **POI Management (manage-poi.tsx) - Detailed Guide:**
+
+The `manage-poi.tsx` feature provides full CRUD (Create, Read, Update, Delete) functionality for Points of Interest.
+
+#### **Permissions:**
+- ✅ **Read POIs**: All authenticated users (admin, faculty, student)
+- ✅ **Create POIs**: Admin and Faculty only
+- ✅ **Update POIs**: Admin and Faculty only
+- ✅ **Delete POIs**: Admin and Faculty only
+
+#### **POI Data Structure:**
+Each POI document in the `pois` collection contains:
+```javascript
+{
+  name: string,              // Required - POI name
+  image: string,             // Image URL (default provided if empty)
+  description: string,       // Description of the POI
+  location: string,          // Location name/address
+  hours: string,             // Operating hours (e.g., "8:00 AM - 10:00 PM")
+  capacity: number,          // Maximum capacity
+  currentOccupancy: number,  // Current number of people
+  status: string,            // "Open", "Busy", "Available", or "Closed"
+  latitude: number,          // GPS latitude (default: 33.6844)
+  longitude: number,         // GPS longitude (default: 73.0479)
+  createdAt: timestamp,      // Auto-generated on creation
+  updatedAt: timestamp       // Auto-generated on update
+}
+```
+
+#### **Features Implemented:**
+1. **Add POI**: Click the + button → Fill form → Submit
+2. **Edit POI**: Click Edit button on any POI card → Modify fields → Update
+3. **Delete POI**: Click Delete button → Confirm deletion
+4. **Navigate to Map**: Click Map button → Redirects to `/features/maps` with POI coordinates
+
+#### **Default Values:**
+- Image: `https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg`
+- Coordinates: Islamabad, Pakistan (33.6844, 73.0479)
+- Status: "Open"
+
+#### **Testing POI Management:**
+```javascript
+// Test POI Data
+{
+  name: "Main Library",
+  description: "Central library with quiet study areas",
+  location: "Central Campus",
+  hours: "8:00 AM - 10:00 PM",
+  capacity: 500,
+  currentOccupancy: 120,
+  status: "Open",
+  latitude: 33.6844,
+  longitude: 73.0479
+}
+```
+
+#### **Navigation Integration:**
+When clicking the "Map" button on a POI:
+- Navigates to: `/features/maps`
+- Passes parameters: `poiName`, `poiLat`, `poiLng`
+- Map automatically centers on the POI location
+- Route calculation starts from current location to POI
+
+### **Maps.tsx Integration with Firestore POIs:**
+
+The `maps.tsx` screen now integrates with Firestore to display managed POIs alongside personal saved locations.
+
+#### **Dual POI System:**
+1. **Managed Campus POIs** (from Firestore `pois` collection):
+   - Purple markers on map
+   - 🏢 icon in drawer list
+   - Real-time sync with manage-poi.tsx
+   - Displayed under "Campus POIs" section
+
+2. **Personal Saved POIs** (local state):
+   - Red markers on map
+   - 📍 icon in drawer list
+   - Saved via long-press or manual entry
+   - Displayed under category sections
+
+#### **Features:**
+- ✅ **Real-time Updates**: Changes in manage-poi.tsx instantly reflect in maps.tsx
+- ✅ **Unified Navigation**: Both POI types use same navigation system
+- ✅ **Quick Access**: "Manage Campus POIs" button in drawer for easy access
+- ✅ **Route Parameters**: Clicking "Map" in manage-poi navigates with POI data
+- ✅ **Combined Counter**: Shows total count of both POI types
+
+#### **Data Flow:**
+```
+User adds POI in manage-poi.tsx
+         ↓
+Saved to Firestore (pois collection)
+         ↓
+maps.tsx Firestore listener detects change
+         ↓
+managedPOIs state updated
+         ↓
+New marker appears on map
+         ↓
+POI listed in drawer under "Campus POIs"
+```
+
+#### **Implementation Status:**
+- ✅ manage-poi.tsx: Fully functional with Firestore CRUD
+- ⚠️ maps.tsx: Requires manual integration (see MAPS_INTEGRATION_GUIDE.md)
+
+#### **Integration Steps:**
+See `MAPS_INTEGRATION_GUIDE.md` for detailed step-by-step instructions to:
+1. Add Firebase imports
+2. Create managedPOIs state
+3. Add Firestore listener
+4. Display managed POIs on map
+5. Add "Manage POIs" button
+6. Handle route parameters from manage-poi
+
 ### **After Publishing Rules:**
 
 1. Wait 10-30 seconds for propagation
@@ -359,6 +474,8 @@ service firebase.storage {
    - Admin can delete users
    - Faculty can send notifications
    - Students can view POIs
+   - **Admin/Faculty can add/edit/delete POIs**
+   - **All users can navigate to POI on map**
 
 ---
 
@@ -380,5 +497,5 @@ service firebase.storage {
 
 ---
 
-**Last Updated:** November 29, 2025
-**Version:** 2.0 (Updated for client-side notification filtering)
+**Last Updated:** December 1, 2025
+**Version:** 2.1 (Added POI Management documentation for manage-poi.tsx)

@@ -16,6 +16,9 @@ import {
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
 import tw from 'twrnc';
+import { router, useLocalSearchParams } from 'expo-router';
+import { db } from '@/firebaseConfig';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 const DRAWER_WIDTH = width * 0.85;
@@ -59,7 +62,9 @@ export default function MapNavigation() {
   const [navigationStarted, setNavigationStarted] = useState(false);
   const [currentDistance, setCurrentDistance] = useState(null);
   const [currentDuration, setCurrentDuration] = useState(null);
-  
+  const params = useLocalSearchParams();
+  const [managedPOIs, setManagedPOIs] = useState([]);
+
   const mapRef = useRef(null);
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
@@ -102,6 +107,40 @@ export default function MapNavigation() {
       stopRealTimeTracking();
     };
   }, [realTimeTracking, selectedPOI, routeData]);
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, 'pois'),
+      (snapshot) => {
+        const pois = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          category: 'Managed',
+          savedAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        }));
+        setManagedPOIs(pois);
+      },
+      (error) => {
+        console.error('Error fetching managed POIs:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Handle incoming POI from manage-poi screen
+  useEffect(() => {
+    if (params.poiName && params.poiLat && params.poiLng && location) {
+      const incomingPOI = {
+        id: Date.now(),
+        name: params.poiName as string,
+        latitude: parseFloat(params.poiLat as string),
+        longitude: parseFloat(params.poiLng as string),
+        category: 'Managed',
+      };
+
+      handleNavigateTo(incomingPOI);
+    }
+  }, [params.poiName, params.poiLat, params.poiLng, location]);
 
   const startRealTimeTracking = async () => {
     try {
@@ -129,7 +168,7 @@ export default function MapNavigation() {
             latitudeDelta: 0.01,
             longitudeDelta: 0.01,
           };
-          
+
           setLocation(newCoords);
           setHeading(newLocation.coords.heading || 0);
 
@@ -151,7 +190,7 @@ export default function MapNavigation() {
           }
         }
       );
-      
+
       setNavigationStarted(true);
       console.log('Real-time navigation started successfully');
     } catch (error) {
@@ -195,16 +234,16 @@ export default function MapNavigation() {
         accuracy: Location.Accuracy.High,
         timeout: 10000,
       });
-      
+
       const newCoords = {
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
       };
-      
+
       setLocation(newCoords);
-      
+
       if (mapRef.current) {
         mapRef.current.animateCamera({
           center: newCoords,
@@ -235,7 +274,7 @@ export default function MapNavigation() {
     setSearching(true);
     try {
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
-      
+
       const response = await fetch(url, {
         headers: { 'User-Agent': 'CampusNavigator/1.0' }
       });
@@ -260,10 +299,10 @@ export default function MapNavigation() {
 
   const calculateRoute = async (origin, destination, showLoading = true) => {
     if (showLoading) setLoading(true);
-    
+
     try {
       const url = `https://router.project-osrm.org/route/v1/driving/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson&steps=true`;
-      
+
       const response = await fetch(url);
       const data = await response.json();
 
@@ -317,7 +356,7 @@ export default function MapNavigation() {
     setDrawerOpen(false);
     setSearchResults([]);
     setSearchQuery('');
-    
+
     await calculateRoute(
       { latitude: location.latitude, longitude: location.longitude },
       { latitude: poi.latitude, longitude: poi.longitude }
@@ -513,6 +552,20 @@ export default function MapNavigation() {
             pinColor={selectedPOI?.id === poi.id ? 'green' : 'red'}
             onPress={() => setSelectedPOI(poi)}
           />
+        ))
+
+        }
+
+        {/* Managed Campus POIs */}
+        {managedPOIs.map(poi => (
+          <Marker
+            key={`managed-${poi.id}`}
+            coordinate={{ latitude: poi.latitude, longitude: poi.longitude }}
+            title={poi.name}
+            description={poi.description}
+            pinColor={selectedPOI?.id === poi.id ? 'green' : 'purple'}
+            onPress={() => setSelectedPOI(poi)}
+          />
         ))}
 
         {routeData && (
@@ -568,8 +621,8 @@ export default function MapNavigation() {
       </View>
 
       {/* Menu Button */}
-      <TouchableOpacity 
-        onPress={toggleDrawer} 
+      <TouchableOpacity
+        onPress={toggleDrawer}
         style={tw`absolute top-12 left-5 w-12 h-12 bg-blue-500 rounded-full justify-center items-center shadow-lg z-10`}
       >
         <Text style={tw`text-2xl text-white`}>{drawerOpen ? Icons.Close : Icons.List}</Text>
@@ -577,7 +630,7 @@ export default function MapNavigation() {
 
       {/* Bottom Right Position Button */}
       <View style={tw`absolute bottom-30 right-5 z-10`}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={getCurrentLocation}
           style={tw`w-14 h-14 bg-blue-500 rounded-full justify-center items-center shadow-lg`}
         >
@@ -592,7 +645,7 @@ export default function MapNavigation() {
             <TouchableOpacity style={tw`flex-1`} activeOpacity={1} onPress={toggleDrawer} />
           </Animated.View>
 
-          <Animated.View 
+          <Animated.View
             style={[
               tw`absolute top-0 bottom-0 bg-white shadow-2xl z-50`,
               { width: DRAWER_WIDTH, transform: [{ translateX: drawerAnim }] }
@@ -611,14 +664,14 @@ export default function MapNavigation() {
 
             {/* Add POI Buttons */}
             <View style={tw`flex-row px-5 py-4 bg-blue-50 border-b border-blue-200 gap-2`}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={tw`flex-1 flex-row items-center justify-center bg-blue-500 rounded-xl py-3 px-4`}
                 onPress={saveCurrentLocationPOI}
               >
                 <Text style={tw`text-white text-lg mr-2`}>{Icons.Plus}</Text>
                 <Text style={tw`text-white font-semibold`}>Save Current</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={tw`flex-1 flex-row items-center justify-center bg-green-500 rounded-xl py-3 px-4`}
                 onPress={() => setShowManualPOIModal(true)}
               >
@@ -627,67 +680,71 @@ export default function MapNavigation() {
               </TouchableOpacity>
             </View>
 
+            {/* Manage Campus POIs Button */}
+            <View style={tw`px-5 py-2`}>
+              <TouchableOpacity
+                style={tw`flex-row items-center justify-center bg-purple-500 rounded-xl py-3 px-4`}
+                onPress={() => {
+                  setDrawerOpen(false);
+                  router.push('/features/manage-poi');
+                }}
+              >
+                <Text style={tw`text-white text-lg mr-2`}>🏢</Text>
+                <Text style={tw`text-white font-semibold`}>Manage Campus POIs</Text>
+              </TouchableOpacity>
+            </View>
+
             {/* Sub Header */}
             <View style={tw`px-5 py-4 bg-blue-50 border-b border-blue-200`}>
               <Text style={tw`text-base font-semibold text-blue-700 mb-1`}>
-                {savedPOIs.length} {savedPOIs.length === 1 ? 'Location' : 'Locations'}
+                {savedPOIs.length + managedPOIs.length} Total Locations
               </Text>
               <Text style={tw`text-xs text-blue-700 opacity-80`}>
-                Long press map to save new location
+                {managedPOIs.length} Campus POIs • {savedPOIs.length} Personal
               </Text>
             </View>
 
             {/* Content */}
             <ScrollView style={tw`flex-1 pb-5`} showsVerticalScrollIndicator={false}>
-              {savedPOIs.length === 0 ? (
-                <View style={tw`items-center justify-center p-10 mt-20`}>
-                  <Text style={tw`text-7xl mb-5 opacity-30`}>{Icons.Pin}</Text>
-                  <Text style={tw`text-lg font-semibold text-gray-600 mb-2`}>No saved locations yet</Text>
-                  <Text style={tw`text-sm text-gray-400 text-center leading-5`}>
-                    Use the buttons above to save locations
+              {/* Managed POIs Section */}
+              {managedPOIs.length > 0 && (
+                <View style={tw`mt-5 px-5`}>
+                  <Text style={tw`text-xs font-bold text-purple-500 mb-3 uppercase tracking-wider`}>
+                    Campus POIs ({managedPOIs.length})
                   </Text>
+                  {managedPOIs.map(poi => (
+                    <View key={poi.id} style={tw`flex-row items-center mb-2.5`}>
+                      <TouchableOpacity
+                        style={tw`flex-1 flex-row justify-between items-center py-3.5 px-4 ${selectedPOI?.id === poi.id ? 'bg-purple-50 border-2 border-purple-500' : 'bg-gray-50 border border-gray-200'
+                          } rounded-xl`}
+                        onPress={() => handleNavigateTo(poi)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={tw`flex-row items-center flex-1`}>
+                          <View style={tw`w-10 h-10 bg-white rounded-full justify-center items-center mr-3`}>
+                            <Text style={tw`text-xl`}>🏢</Text>
+                          </View>
+                          <View style={tw`flex-1`}>
+                            <Text style={tw`text-base font-semibold text-gray-800 mb-0.5`}>{poi.name}</Text>
+                            {poi.description && (
+                              <Text style={tw`text-xs text-gray-600 mt-0.5`} numberOfLines={1}>
+                                {poi.description}
+                              </Text>
+                            )}
+                            {poi.location && (
+                              <Text style={tw`text-xs text-gray-500 mt-0.5`} numberOfLines={1}>
+                                📍 {poi.location}
+                              </Text>
+                            )}
+                          </View>
+                        </View>
+                        <View style={tw`w-9 h-9 bg-purple-500 rounded-full justify-center items-center ml-2`}>
+                          <Text style={tw`text-lg text-white`}>{Icons.Navigation}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
                 </View>
-              ) : (
-                Object.entries(groupedPOIs).map(([category, pois]) => (
-                  <View key={category} style={tw`mt-5 px-5`}>
-                    <Text style={tw`text-xs font-bold text-blue-500 mb-3 uppercase tracking-wider`}>
-                      {category}
-                    </Text>
-                    {pois.map(poi => (
-                      <View key={poi.id} style={tw`flex-row items-center mb-2.5`}>
-                        <TouchableOpacity
-                          style={tw`flex-1 flex-row justify-between items-center py-3.5 px-4 ${selectedPOI?.id === poi.id ? 'bg-blue-50 border-2 border-blue-500' : 'bg-gray-50 border border-gray-200'} rounded-xl`}
-                          onPress={() => handleNavigateTo(poi)}
-                          activeOpacity={0.7}
-                        >
-                          <View style={tw`flex-row items-center flex-1`}>
-                            <View style={tw`w-10 h-10 bg-white rounded-full justify-center items-center mr-3`}>
-                              <Text style={tw`text-xl`}>{Icons.Pin}</Text>
-                            </View>
-                            <View style={tw`flex-1`}>
-                              <Text style={tw`text-base font-semibold text-gray-800 mb-0.5`}>{poi.name}</Text>
-                              {poi.description && (
-                                <Text style={tw`text-xs text-gray-600 mt-0.5`} numberOfLines={1}>
-                                  {poi.description}
-                                </Text>
-                              )}
-                            </View>
-                          </View>
-                          <View style={tw`w-9 h-9 bg-blue-500 rounded-full justify-center items-center ml-2`}>
-                            <Text style={tw`text-lg text-white`}>{Icons.Navigation}</Text>
-                          </View>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => deletePOI(poi.id)}
-                          style={tw`ml-2.5 p-3 bg-red-50 rounded-xl border border-red-200`}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={tw`text-xl`}>{Icons.Trash}</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </View>
-                ))
               )}
             </ScrollView>
 
@@ -734,7 +791,7 @@ export default function MapNavigation() {
           </View>
 
           {/* Start Navigation Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={startNavigation}
             style={tw`bg-green-500 rounded-xl py-4 flex-row justify-center items-center shadow-lg`}
           >
@@ -767,7 +824,7 @@ export default function MapNavigation() {
                   </View>
                 </View>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={exitNavigation}
                 style={tw`w-10 h-10 bg-red-500 rounded-full justify-center items-center`}
               >
@@ -783,19 +840,19 @@ export default function MapNavigation() {
                 </Text>
                 <Text style={tw`text-xs text-white/70 mt-1`}>km remaining</Text>
               </View>
-              
+
               <View style={tw`w-px h-10 bg-white/20`} />
-              
+
               <View style={tw`items-center flex-1`}>
                 <Text style={tw`text-2xl font-bold text-white`}>
                   {currentDuration || routeData.duration}
                 </Text>
                 <Text style={tw`text-xs text-white/70 mt-1`}>min ETA</Text>
               </View>
-              
+
               <View style={tw`w-px h-10 bg-white/20`} />
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 onPress={getCurrentLocation}
                 style={tw`items-center flex-1`}
               >
@@ -818,11 +875,11 @@ export default function MapNavigation() {
         animationType="slide"
         onRequestClose={() => setShowSaveModal(false)}
       >
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={tw`flex-1 justify-end`}
         >
-          <TouchableOpacity 
+          <TouchableOpacity
             style={tw`flex-1 bg-black/60`}
             activeOpacity={1}
             onPress={() => setShowSaveModal(false)}
@@ -882,11 +939,11 @@ export default function MapNavigation() {
         animationType="slide"
         onRequestClose={() => setShowManualPOIModal(false)}
       >
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={tw`flex-1 justify-end`}
         >
-          <TouchableOpacity 
+          <TouchableOpacity
             style={tw`flex-1 bg-black/60`}
             activeOpacity={1}
             onPress={() => setShowManualPOIModal(false)}
