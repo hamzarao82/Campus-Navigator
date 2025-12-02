@@ -29,7 +29,12 @@
         "ACCESS_COARSE_LOCATION",
         "FOREGROUND_SERVICE"
       ],
-      "package": "com.hamzarao82.CampusNavigator"
+      "package": "com.hamzarao82.CampusNavigator",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAeB7xegJ9zRkgyFznAXaRPuWNllYcZkv0"
+        }
+      }
     },
     "web": {
       "output": "static",

@@ -18,7 +18,7 @@ import * as Location from 'expo-location';
 import tw from 'twrnc';
 import { router, useLocalSearchParams } from 'expo-router';
 import { db } from '@/firebaseConfig';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');
 const DRAWER_WIDTH = width * 0.85;
@@ -405,50 +405,65 @@ export default function MapNavigation() {
     setShowSaveModal(true);
   };
 
-  const savePOI = () => {
+  const savePOI = async () => {
     if (!newPOI.name.trim()) {
       Alert.alert('Error', 'Please enter a name for this location');
       return;
     }
+    try {
+      const poiData = {
+        name: newPOI.name,
+        description: newPOI.description || '',
+        capacity: 0,
+        currentOccupancy: 0,
+        status: 'Open',
+        latitude: longPressCoords.latitude,
+        longitude: longPressCoords.longitude,
+        image: 'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg',
+        createdAt: serverTimestamp(),
+      };
 
-    const poi = {
-      id: Date.now(),
-      name: newPOI.name,
-      description: newPOI.description,
-      category: newPOI.category,
-      latitude: longPressCoords.latitude,
-      longitude: longPressCoords.longitude,
-      savedAt: new Date().toISOString(),
-    };
-
-    setSavedPOIs([...savedPOIs, poi]);
-    setShowSaveModal(false);
-    setNewPOI({ name: '', description: '', category: 'Custom' });
-    Alert.alert('Success', 'Location saved successfully!');
+      await addDoc(collection(db, 'pois'), poiData);
+      setShowSaveModal(false);
+      setNewPOI({ name: '', description: '', category: 'Custom' });
+      Alert.alert('Success', 'Location saved to campus POIs');
+    } catch (error) {
+      console.error("Error saving POI:", error);
+      Alert.alert('Error', 'Failed to save location');
+    }
   };
 
-  const saveCurrentLocationPOI = () => {
+  const saveCurrentLocationPOI = async () => {  // ← Add 'async'
     if (!location) {
       Alert.alert('Error', 'Current location not available');
       return;
     }
 
-    const poi = {
-      id: Date.now(),
-      name: 'Current Location',
-      description: 'Saved from current position',
-      category: 'Current',
-      latitude: location.latitude,
-      longitude: location.longitude,
-      savedAt: new Date().toISOString(),
-    };
+    try {
+      const poiData = {
+        name: 'Current Location',
+        description: 'Saved from current position',
+        location: '',
+        hours: '',
+        capacity: 0,
+        currentOccupancy: 0,
+        status: 'Open',
+        latitude: location.latitude,
+        longitude: location.longitude,
+        image: 'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg',
+        createdAt: serverTimestamp(),
+      };
 
-    setSavedPOIs([...savedPOIs, poi]);
-    setDrawerOpen(false);
-    Alert.alert('Success', 'Current location saved successfully!');
+      await addDoc(collection(db, "pois"), poiData);  // ✅ Save to Firebase
+      setDrawerOpen(false);
+      Alert.alert('Success', 'Current location saved to campus POIs!');
+    } catch (error) {
+      console.error("Error saving POI:", error);
+      Alert.alert('Error', 'Failed to save location. Make sure you have admin/faculty permissions.');
+    }
   };
 
-  const saveManualPOI = () => {
+  const saveManualPOI = async () => {  // ← Add 'async'
     if (!manualPOI.name.trim()) {
       Alert.alert('Error', 'Please enter a name for this location');
       return;
@@ -467,23 +482,32 @@ export default function MapNavigation() {
       return;
     }
 
-    const poi = {
-      id: Date.now(),
-      name: manualPOI.name,
-      description: manualPOI.description,
-      category: manualPOI.category,
-      latitude: lat,
-      longitude: lng,
-      savedAt: new Date().toISOString(),
-    };
+    try {
+      const poiData = {
+        name: manualPOI.name,
+        description: manualPOI.description || '',
+        location: '',
+        hours: '',
+        capacity: 0,
+        currentOccupancy: 0,
+        status: 'Open',
+        latitude: lat,
+        longitude: lng,
+        image: 'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg',
+        createdAt: serverTimestamp(),
+      };
 
-    setSavedPOIs([...savedPOIs, poi]);
-    setShowManualPOIModal(false);
-    setManualPOI({ name: '', latitude: '', longitude: '', description: '', category: 'Custom' });
-    Alert.alert('Success', 'Location saved successfully!');
+      await addDoc(collection(db, "pois"), poiData);  // ✅ Save to Firebase
+      setShowManualPOIModal(false);
+      setManualPOI({ name: '', latitude: '', longitude: '', description: '', category: 'Custom' });
+      Alert.alert('Success', 'Location saved to campus POIs!');
+    } catch (error) {
+      console.error("Error saving POI:", error);
+      Alert.alert('Error', 'Failed to save location. Make sure you have admin/faculty permissions.');
+    }
   };
 
-  const deletePOI = (id) => {
+  const deletePOI = (id: string) => {
     Alert.alert(
       'Delete Location',
       'Are you sure you want to delete this location?',
@@ -745,6 +769,58 @@ export default function MapNavigation() {
                     </View>
                   ))}
                 </View>
+              )}
+
+              {/* Personal Saved POIs Section */}
+              {savedPOIs.length === 0 ? (
+                <View style={tw`items-center justify-center p-10 mt-20`}>
+                  <Text style={tw`text-7xl mb-5 opacity-30`}>{Icons.Pin}</Text>
+                  <Text style={tw`text-lg font-semibold text-gray-600 mb-2`}>No saved locations yet</Text>
+                  <Text style={tw`text-sm text-gray-400 text-center leading-5`}>
+                    Use the buttons above to save locations
+                  </Text>
+                </View>
+              ) : (
+                Object.entries(groupedPOIs).map(([category, pois]) => (
+                  <View key={category} style={tw`mt-5 px-5`}>
+                    <Text style={tw`text-xs font-bold text-blue-500 mb-3 uppercase tracking-wider`}>
+                      {category}
+                    </Text>
+                    {pois.map(poi => (
+                      <View key={poi.id} style={tw`flex-row items-center mb-2.5`}>
+                        <TouchableOpacity
+                          style={tw`flex-1 flex-row justify-between items-center py-3.5 px-4 ${selectedPOI?.id === poi.id ? 'bg-blue-50 border-2 border-blue-500' : 'bg-gray-50 border border-gray-200'} rounded-xl`}
+                          onPress={() => handleNavigateTo(poi)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={tw`flex-row items-center flex-1`}>
+                            <View style={tw`w-10 h-10 bg-white rounded-full justify-center items-center mr-3`}>
+                              <Text style={tw`text-xl`}>{Icons.Pin}</Text>
+                            </View>
+                            <View style={tw`flex-1`}>
+                              <Text style={tw`text-base font-semibold text-gray-800 mb-0.5`}>{poi.name}</Text>
+                              {poi.description && (
+                                <Text style={tw`text-xs text-gray-600 mt-0.5`} numberOfLines={1}>
+                                  {poi.description}
+                                </Text>
+                              )}
+                            </View>
+                          </View>
+                          <View style={tw`w-9 h-9 bg-blue-500 rounded-full justify-center items-center ml-2`}>
+                            <Text style={tw`text-lg text-white`}>{Icons.Navigation}</Text>
+                          </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => deletePOI(poi.id)}
+                          style={tw`ml-2.5 p-3 bg-red-50 rounded-xl border border-red-200`}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={tw`text-xl`}>{Icons.Trash}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                ))
               )}
             </ScrollView>
 
