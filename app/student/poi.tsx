@@ -7,13 +7,19 @@ import tw from "twrnc";
 import { db } from "../../firebaseConfig";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 
+// POI interface matching the data structure from manage-poi.tsx
 interface POI {
   id: string;
   name: string;
   image: string;
-  status: string;
-  occupancy: string;
+  description: string;
+  location: string;
   hours: string;
+  capacity: number;
+  currentOccupancy: number;
+  status: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export default function POIScreen() {
@@ -50,25 +56,40 @@ export default function POIScreen() {
           id: "1",
           name: "Central Library",
           image: "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg",
+          description: "Main campus library with study rooms and resources",
+          location: "Building A, Ground Floor",
           status: "Open",
-          occupancy: "Medium",
+          capacity: 200,
+          currentOccupancy: 85,
           hours: "8:00 AM - 8:00 PM",
+          latitude: 33.6844,
+          longitude: 73.0479,
         },
         {
           id: "2",
           name: "Student Cafeteria",
           image: "https://images.pexels.com/photos/3184183/pexels-photo-3184183.jpeg",
+          description: "Campus dining hall with various food options",
+          location: "Building B, First Floor",
           status: "Busy",
-          occupancy: "High",
+          capacity: 150,
+          currentOccupancy: 140,
           hours: "9:00 AM - 10:00 PM",
+          latitude: 33.6850,
+          longitude: 73.0485,
         },
         {
           id: "3",
           name: "Sports Complex",
           image: "https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg",
+          description: "Indoor and outdoor sports facilities",
+          location: "East Campus",
           status: "Closed",
-          occupancy: "N/A",
+          capacity: 300,
+          currentOccupancy: 0,
           hours: "6:00 AM - 9:00 PM",
+          latitude: 33.6860,
+          longitude: 73.0490,
         },
       ]);
     } finally {
@@ -87,6 +108,26 @@ export default function POIScreen() {
       default:
         return "bg-gray-100 text-gray-700";
     }
+  };
+
+  // Navigate to map with POI coordinates for directions
+  const handleNavigateToMap = (poi: POI) => {
+    router.push({
+      pathname: "/features/maps",
+      params: {
+        poiName: poi.name,
+        poiLat: poi.latitude?.toString() || "33.6844",
+        poiLng: poi.longitude?.toString() || "73.0479",
+      },
+    });
+  };
+
+  // Get occupancy status text
+  const getOccupancyText = (poi: POI) => {
+    if (poi.capacity && poi.capacity > 0) {
+      return `${poi.currentOccupancy || 0}/${poi.capacity} occupied`;
+    }
+    return poi.status === "Closed" ? "N/A" : "Unknown";
   };
 
   return (
@@ -155,14 +196,22 @@ export default function POIScreen() {
                     <View style={tw`flex-row items-center mb-1`}>
                       <Feather name="users" size={16} color="#6B7280" />
                       <Text style={tw`ml-2 text-sm text-gray-500`}>
-                        Occupancy: {poi.occupancy}
+                        Occupancy: {getOccupancyText(poi)}
                       </Text>
                     </View>
+                    {poi.location && (
+                      <View style={tw`flex-row items-center mb-1`}>
+                        <Feather name="map-pin" size={16} color="#6B7280" />
+                        <Text style={tw`ml-2 text-sm text-gray-500`}>
+                          {poi.location}
+                        </Text>
+                      </View>
+                    )}
                     <TouchableOpacity
-                      style={tw`flex-row items-center mt-1`}
-                      onPress={() => alert(`Get Directions to ${poi.name}`)}
+                      style={tw`flex-row items-center mt-2 bg-blue-50 py-2 px-3 rounded-lg self-start`}
+                      onPress={() => handleNavigateToMap(poi)}
                     >
-                      <Ionicons name="location-outline" size={16} color="#2563EB" />
+                      <Ionicons name="navigate" size={16} color="#2563EB" />
                       <Text style={tw`ml-2 text-sm font-medium text-blue-600`}>
                         Get Directions
                       </Text>

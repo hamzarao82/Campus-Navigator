@@ -23,6 +23,46 @@ import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firest
 const { width } = Dimensions.get('window');
 const DRAWER_WIDTH = width * 0.85;
 
+// TypeScript interfaces
+interface LocationCoords {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+}
+
+interface POI {
+  id: string | number;
+  name: string;
+  description?: string;
+  category?: string;
+  latitude: number;
+  longitude: number;
+  location?: string;
+  savedAt?: string;
+  type?: string;
+}
+
+interface RouteData {
+  coordinates: { latitude: number; longitude: number }[];
+  distance: string;
+  duration: number;
+  steps: any[];
+}
+
+interface SearchResult {
+  id: string | number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  type?: string;
+}
+
+interface LongPressCoords {
+  latitude: number;
+  longitude: number;
+}
+
 const Icons = {
   Menu: '☰',
   Close: '✕',
@@ -44,32 +84,32 @@ const Icons = {
 };
 
 export default function MapNavigation() {
-  const [location, setLocation] = useState(null);
-  const [selectedPOI, setSelectedPOI] = useState(null);
-  const [routeData, setRouteData] = useState(null);
+  const [location, setLocation] = useState<LocationCoords | null>(null);
+  const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
+  const [routeData, setRouteData] = useState<RouteData | null>(null);
   const [loading, setLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [savedPOIs, setSavedPOIs] = useState([]);
+  const [savedPOIs, setSavedPOIs] = useState<POI[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showManualPOIModal, setShowManualPOIModal] = useState(false);
   const [newPOI, setNewPOI] = useState({ name: '', description: '', category: 'Custom' });
   const [manualPOI, setManualPOI] = useState({ name: '', latitude: '', longitude: '', description: '', category: 'Custom' });
-  const [longPressCoords, setLongPressCoords] = useState(null);
+  const [longPressCoords, setLongPressCoords] = useState<LongPressCoords | null>(null);
   const [realTimeTracking, setRealTimeTracking] = useState(false);
   const [heading, setHeading] = useState(0);
   const [navigationStarted, setNavigationStarted] = useState(false);
-  const [currentDistance, setCurrentDistance] = useState(null);
-  const [currentDuration, setCurrentDuration] = useState(null);
+  const [currentDistance, setCurrentDistance] = useState<string | null>(null);
+  const [currentDuration, setCurrentDuration] = useState<number | null>(null);
   const params = useLocalSearchParams();
-  const [managedPOIs, setManagedPOIs] = useState([]);
+  const [managedPOIs, setManagedPOIs] = useState<POI[]>([]);
 
-  const mapRef = useRef(null);
+  const mapRef = useRef<MapView | null>(null);
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
-  const locationSubscription = useRef(null);
+  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
 
   useEffect(() => {
     getCurrentLocation();
@@ -112,7 +152,7 @@ export default function MapNavigation() {
     const unsubscribe = onSnapshot(
       collection(db, 'pois'),
       (snapshot) => {
-        const pois = snapshot.docs.map((doc) => ({
+        const pois = snapshot.docs.map((doc: any) => ({
           id: doc.id,
           ...doc.data(),
           category: 'Managed',
@@ -120,7 +160,7 @@ export default function MapNavigation() {
         }));
         setManagedPOIs(pois);
       },
-      (error) => {
+      (error: any) => {
         console.error('Error fetching managed POIs:', error);
       }
     );
@@ -161,7 +201,7 @@ export default function MapNavigation() {
           timeInterval: 3000,
           distanceInterval: 5,
         },
-        (newLocation) => {
+        (newLocation: Location.LocationObject) => {
           console.log('New location update received');
           const newCoords = {
             latitude: newLocation.coords.latitude,
@@ -233,7 +273,6 @@ export default function MapNavigation() {
 
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
-        timeout: 10000,
       });
 
       const newCoords = {
@@ -266,7 +305,7 @@ export default function MapNavigation() {
     });
   };
 
-  const searchLocation = async (query) => {
+  const searchLocation = async (query: string) => {
     if (!query || query.length < 3) {
       setSearchResults([]);
       return;
@@ -281,7 +320,7 @@ export default function MapNavigation() {
       });
       const data = await response.json();
 
-      const results = data.map(item => ({
+      const results = data.map((item: any) => ({
         id: item.place_id,
         name: item.display_name,
         latitude: parseFloat(item.lat),
@@ -298,7 +337,11 @@ export default function MapNavigation() {
     }
   };
 
-  const calculateRoute = async (origin, destination, showLoading = true) => {
+  const calculateRoute = async (
+    origin: { latitude: number; longitude: number },
+    destination: { latitude: number; longitude: number },
+    showLoading: boolean = true
+  ) => {
     if (showLoading) setLoading(true);
 
     try {
@@ -312,7 +355,7 @@ export default function MapNavigation() {
       }
 
       const route = data.routes[0];
-      const coordinates = route.geometry.coordinates.map(coord => ({
+      const coordinates = route.geometry.coordinates.map((coord: number[]) => ({
         latitude: coord[1],
         longitude: coord[0],
       }));
@@ -347,7 +390,7 @@ export default function MapNavigation() {
     }
   };
 
-  const handleNavigateTo = async (poi) => {
+  const handleNavigateTo = async (poi: POI) => {
     if (!location) {
       Alert.alert('Location Required', 'Enable location services');
       return;
@@ -399,7 +442,7 @@ export default function MapNavigation() {
     stopRealTimeTracking();
   };
 
-  const handleMapLongPress = (e) => {
+  const handleMapLongPress = (e: any) => {
     const coords = e.nativeEvent.coordinate;
     setLongPressCoords(coords);
     setNewPOI({ ...newPOI, name: '', description: '', category: 'Custom' });
@@ -409,6 +452,10 @@ export default function MapNavigation() {
   const savePOI = async () => {
     if (!newPOI.name.trim()) {
       Alert.alert('Error', 'Please enter a name for this location');
+      return;
+    }
+    if (!longPressCoords) {
+      Alert.alert('Error', 'Please long press on the map to save this location');
       return;
     }
     try {
@@ -508,7 +555,7 @@ export default function MapNavigation() {
     }
   };
 
-  const deletePOI = (id: string) => {
+  const deletePOI = (id: string | number) => {
     Alert.alert(
       'Delete Location',
       'Are you sure you want to delete this location?',
@@ -525,7 +572,7 @@ export default function MapNavigation() {
 
   const toggleDrawer = () => setDrawerOpen(!drawerOpen);
 
-  const handleSearchSelect = (result) => {
+  const handleSearchSelect = (result: SearchResult) => {
     const poi = {
       id: result.id,
       name: result.name,
@@ -548,11 +595,15 @@ export default function MapNavigation() {
     );
   }
 
-  const groupedPOIs = savedPOIs.reduce((acc, poi) => {
-    if (!acc[poi.category]) acc[poi.category] = [];
-    acc[poi.category].push(poi);
-    return acc;
-  }, {});
+  const groupedPOIs = savedPOIs.reduce<Record<string, POI[]>>(
+    (acc, poi) => {
+      const category = poi.category || 'Uncategorized';
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(poi);
+      return acc;
+    },
+    {}
+  );
 
   return (
     <View style={tw`flex-1`}>

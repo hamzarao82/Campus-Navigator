@@ -1,14 +1,29 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tw from "twrnc";
 import { Ionicons, MaterialIcons, Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { db } from "@/firebaseConfig";
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp } from "firebase/firestore";
+
+interface Course {
+  id: string;
+  code: string;
+  name: string;
+  instructor: string;
+  schedule: string;
+  location: string;
+  capacity: number;
+  enrolled: number;
+  status: string;
+}
 
 export default function CourseScheduleScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<any>(null);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
   const [newCourse, setNewCourse] = useState({
     code: "",
     name: "",
@@ -19,64 +34,118 @@ export default function CourseScheduleScreen() {
     enrolled: "",
   });
 
-  // Mock data
-  const [courses, setCourses] = useState([
-    {
-      id: "1",
-      code: "CS101",
-      name: "Introduction to Computer Science",
-      instructor: "Dr. Ali",
-      schedule: "Mon, Wed 10:00 AM",
-      location: "Room 201",
-      capacity: 50,
-      enrolled: 40,
-      status: "Active",
-    },
-    {
-      id: "2",
-      code: "MTH203",
-      name: "Calculus II",
-      instructor: "Prof. Sara",
-      schedule: "Tue, Thu 2:00 PM",
-      location: "Room 305",
-      capacity: 40,
-      enrolled: 35,
-      status: "Pending",
-    },
-  ]);
+  // Firebase data
+  const [courses, setCourses] = useState<Course[]>([]);
 
-  const handleAddCourse = () => {
+  // Fetch courses from Firebase in real-time
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "courses"),
+      (snapshot) => {
+        const coursesData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Course[];
+        setCourses(coursesData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching courses:", error);
+        Alert.alert("Error", "Failed to load courses");
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleAddCourse = async () => {
     if (!newCourse.code || !newCourse.name || !newCourse.instructor) {
-      Alert.alert("Missing Info", "Please fill in all fields.");
+      Alert.alert("Missing Info", "Please fill in all required fields.");
       return;
     }
-    setCourses([
-      ...courses,
-      { id: Date.now().toString(), ...newCourse, capacity: +newCourse.capacity, enrolled: +newCourse.enrolled, status: "Pending" },
-    ]);
-    setNewCourse({ code: "", name: "", instructor: "", schedule: "", location: "", capacity: "", enrolled: "" });
-    setIsAdding(false);
+
+    try {
+      const courseData = {
+        code: newCourse.code,
+        name: newCourse.name,
+        instructor: newCourse.instructor,
+        schedule: newCourse.schedule,
+        location: newCourse.location,
+        capacity: parseInt(newCourse.capacity) || 0,
+        enrolled: parseInt(newCourse.enrolled) || 0,
+        status: "Active",
+        createdAt: serverTimestamp(),
+      };
+
+      await addDoc(collection(db, "courses"), courseData);
+      Alert.alert("Success", "Course added successfully!");
+      setNewCourse({ code: "", name: "", instructor: "", schedule: "", location: "", capacity: "", enrolled: "" });
+      setIsAdding(false);
+    } catch (error) {
+      console.error("Error adding course:", error);
+      Alert.alert("Error", "Failed to add course");
+    }
   };
 
-  const handleUpdateCourse = () => {
+  const handleUpdateCourse = async () => {
     if (!editingCourse) return;
-    setCourses(courses.map(c => (c.id === editingCourse.id ? editingCourse : c)));
-    setEditingCourse(null);
+
+    try {
+      const courseRef = doc(db, "courses", editingCourse.id);
+      await updateDoc(courseRef, {
+        code: editingCourse.code,
+        name: editingCourse.name,
+        instructor: editingCourse.instructor,
+        schedule: editingCourse.schedule,
+        location: editingCourse.location,
+        capacity: typeof editingCourse.capacity === 'string' ? parseInt(editingCourse.capacity) : editingCourse.capacity,
+        enrolled: typeof editingCourse.enrolled === 'string' ? parseInt(editingCourse.enrolled) : editingCourse.enrolled,
+        status: editingCourse.status,
+        updatedAt: serverTimestamp(),
+      });
+      Alert.alert("Success", "Course updated successfully!");
+      setEditingCourse(null);
+    } catch (error) {
+      console.error("Error updating course:", error);
+      Alert.alert("Error", "Failed to update course");
+    }
   };
 
   const handleDeleteCourse = (id: string) => {
-    Alert.alert("Confirm", "Are you sure you want to delete?", [
+    Alert.alert("Confirm", "Are you sure you want to delete this course?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Delete", onPress: () => setCourses(courses.filter(c => c.id !== id)) },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteDoc(doc(db, "courses", id));
+            Alert.alert("Success", "Course deleted successfully!");
+          } catch (error) {
+            console.error("Error deleting course:", error);
+            Alert.alert("Error", "Failed to delete course");
+          }
+        },
+      },
     ]);
   };
 
   const filteredCourses = courses.filter(
     c =>
-      c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.instructor.toLowerCase().includes(searchQuery.toLowerCase())
+      c.code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.instructor?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={tw`flex-1 bg-white items-center justify-center`}>
+        <ActivityIndicator size="large" color="#2563eb" />
+        <Text style={tw`mt-4 text-gray-600`}>Loading courses...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
@@ -116,6 +185,7 @@ export default function CourseScheduleScreen() {
                 key={field}
                 style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-3 text-black`}
                 placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                placeholderTextColor="#888"
                 value={(editingCourse ? editingCourse[field as keyof typeof editingCourse] : newCourse[field as keyof typeof newCourse]).toString()}
                 onChangeText={text =>
                   editingCourse
