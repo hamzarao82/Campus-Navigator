@@ -24,37 +24,43 @@ export default function StudentDashboard() {
     {
       title: "Campus Map",
       route: "/features/maps",
-      icon: "map-outline",
+      iconLib: Ionicons,
+      iconName: "map-outline",
       description: "Navigate through campus",
     },
     {
       title: "Check POI",
       route: "/student/poi",
-      icon: "pin-outline",
+      iconLib: Ionicons,
+      iconName: "location-outline",
       description: "Find points of interest",
     },
     {
       title: "Schedules",
       route: "/student/schedules",
-      icon: "calendar-outline",
+      iconLib: Ionicons,
+      iconName: "calendar-outline",
       description: "View your class schedule",
     },
     {
       title: "Notifications",
       route: "/student/student-notification",
-      icon: "notifications-outline",
+      iconLib: Ionicons,
+      iconName: "notifications-outline",
       description: "View important announcements",
     },
     {
       title: "Profile",
       route: "/student/student-profile",
-      icon: "person-outline",
+      iconLib: Ionicons,
+      iconName: "person-outline",
       description: "Manage your account",
     },
     {
-      title: "Setting",
+      title: "Settings",
       route: "/features/settings",
-      icon: "settings-outline",
+      iconLib: Ionicons,
+      iconName: "settings-outline",
       description: "System configuration",
     }
   ];
@@ -84,28 +90,31 @@ export default function StudentDashboard() {
 
         {/* Menu Items */}
         <View style={tw`gap-4`}>
-          {menuItems.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={tw`flex-row items-center bg-gray-50 rounded-2xl p-4 shadow-sm`}
-              onPress={() => router.push(item.route)}
-            >
-              <View
-                style={tw`w-12 h-12 rounded-full bg-blue-100 justify-center items-center mr-4`}
+          {menuItems.map((item, index) => {
+            const IconComponent = item.iconLib;
+            return (
+              <TouchableOpacity
+                key={index}
+                style={tw`flex-row items-center bg-white rounded-2xl p-4 border border-gray-100 shadow-sm`}
+                onPress={() => router.push(item.route as any)}
               >
-                <Ionicons name={item.icon} size={24} color="#2563eb" />
-              </View>
+                <View
+                  style={tw`w-12 h-12 rounded-full bg-blue-100 justify-center items-center mr-4`}
+                >
+                  <IconComponent name={item.iconName as any} size={22} color="#2563EB" />
+                </View>
 
-              <View style={tw`flex-1`}>
-                <Text style={tw`text-lg font-semibold text-gray-800`}>
-                  {item.title}
-                </Text>
-                <Text style={tw`text-sm text-gray-500`}>
-                  {item.description}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+                <View style={tw`flex-1`}>
+                  <Text style={tw`text-lg font-semibold text-gray-800`}>
+                    {item.title}
+                  </Text>
+                  <Text style={tw`text-sm text-gray-500`}>
+                    {item.description}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>

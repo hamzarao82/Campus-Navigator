@@ -37,6 +37,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -203,7 +204,7 @@ export default function LoginScreen() {
             <Text style={tw`text-sm font-medium text-gray-700 mb-1`}>Password</Text>
             <View style={tw`flex-row items-center bg-gray-100 rounded-xl px-4`}>
               <TextInput
-                style={tw`flex-1 py-3`}
+                style={tw`flex-1 py-3 text-gray-900`}
                 placeholder="Enter your password"
                 placeholderTextColor="#999"
                 secureTextEntry={!showPassword}
@@ -220,17 +221,29 @@ export default function LoginScreen() {
             </View>
           </View>
 
-          <TouchableOpacity
-            style={tw`mb-4 self-end`}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={tw`text-blue-600 font-medium text-sm`}>
-              Forgot Password?
-            </Text>
-          </TouchableOpacity>
+          <View style={tw`flex-row items-center justify-between mb-6`}>
+            <TouchableOpacity
+              style={tw`flex-row items-center`}
+              onPress={() => setRememberMe(!rememberMe)}
+            >
+              <View style={tw`w-5 h-5 rounded border-2 border-blue-600 mr-2 items-center justify-center ${rememberMe ? 'bg-blue-600' : 'bg-white'
+                }`}>
+                {rememberMe && (
+                  <Ionicons name="checkmark" size={14} color="white" />
+                )}
+              </View>
+              <Text style={tw`text-gray-700 text-sm`}>Remember Me</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setModalVisible(true)}>
+              <Text style={tw`text-blue-600 font-medium text-sm`}>
+                Forgot Password?
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity
-            style={tw`bg-blue-600 py-4 rounded-2xl`}
+            style={tw`bg-blue-600 py-4 rounded-2xl mt-2`}
             onPress={handleLogin}
             disabled={loading}
           >
@@ -244,10 +257,10 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={tw`mt-6 items-center`}
+            style={tw`mt-8 items-center`}
             onPress={() => router.replace("/signup")}
           >
-            <Text style={tw`text-sm text-gray-600 mt-2`}>
+            <Text style={tw`text-sm text-gray-600`}>
               Don’t have an account?{" "}
               <Text style={tw`text-blue-600 font-semibold`}>Sign Up</Text>
             </Text>

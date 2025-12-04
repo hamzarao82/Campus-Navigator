@@ -83,24 +83,24 @@ export default function ScheduleScreen() {
             style={tw`bg-white p-4 mb-4 rounded-2xl shadow-sm`}
           >
             {/* Header */}
-           <View style={tw`flex-row justify-between items-start mb-3 flex-wrap`}>
-  {/* Left side: Course name & code */}
-  <View style={tw`flex-1 pr-3`}>
-    <Text
-      style={[tw`text-lg font-semibold text-gray-900`, { flexShrink: 1, flexWrap: 'wrap' }]}
-    >
-      {course.name}
-    </Text>
-    <Text style={tw`text-sm text-gray-500`}>{course.code}</Text>
-  </View>
+            <View style={tw`flex-row justify-between items-start mb-3 flex-wrap`}>
+              {/* Left side: Course name & code */}
+              <View style={tw`flex-1 pr-3`}>
+                <Text
+                  style={[tw`text-lg font-semibold text-gray-900`, { flexShrink: 1, flexWrap: 'wrap' }]}
+                >
+                  {course.name}
+                </Text>
+                <Text style={tw`text-sm text-gray-500`}>{course.code}</Text>
+              </View>
 
-  {/* Right side: Status badge */}
-  <View style={tw`px-3 py-1 rounded-full ${getStatusColor(course.status)}`}>
-  <Text style={tw`text-xs font-medium capitalize`}>
-    {course.status}
-  </Text>
-</View>
-</View>
+              {/* Right side: Status badge */}
+              <View style={tw`px-3 py-1 rounded-full ${getStatusColor(course.status)}`}>
+                <Text style={tw`text-xs font-medium capitalize`}>
+                  {course.status}
+                </Text>
+              </View>
+            </View>
 
             {/* Info */}
             <View style={tw`mb-4`}>
@@ -131,21 +131,22 @@ export default function ScheduleScreen() {
               </Text>
               <View style={tw`h-2 bg-gray-200 rounded-full mb-2`}>
                 <View
-                  style={tw`h-2 rounded-full ${getProgressColor(
-                    course.enrolled,
-                    course.capacity
-                  )}`}
-                  width={`${(course.enrolled / course.capacity) * 100}%`}
+                  style={[
+                    tw`h-2 rounded-full ${getProgressColor(
+                      course.enrolled,
+                      course.capacity
+                    )}`,
+                    { width: `${(course.enrolled / course.capacity) * 100}%` }
+                  ]}
                 />
               </View>
               <Text
-                style={tw`text-right text-sm font-medium ${
-                  course.enrolled / course.capacity >= 0.9
+                style={tw`text-right text-sm font-medium ${course.enrolled / course.capacity >= 0.9
                     ? "text-red-600"
                     : course.enrolled / course.capacity >= 0.7
-                    ? "text-yellow-600"
-                    : "text-green-600"
-                }`}
+                      ? "text-yellow-600"
+                      : "text-green-600"
+                  }`}
               >
                 {course.enrolled}/{course.capacity} Enrolled
               </Text>

@@ -135,12 +135,12 @@ export default function AdminDashboard() {
             <TouchableOpacity
               key={index}
               style={tw`flex-row items-center bg-white rounded-2xl p-4 mb-3 border border-gray-100 shadow-sm`}
-              onPress={() => router.push(item.route)}
+              onPress={() => router.push(item.route as any)}
             >
               <View
                 style={tw`w-12 h-12 rounded-full bg-blue-100 items-center justify-center mr-4`}
               >
-                <IconComponent name={item.iconName} size={22} color="#2563EB" />
+                <IconComponent name={item.iconName as any} size={22} color="#2563EB" />
               </View>
               <View style={tw`flex-1`}>
                 <Text style={tw`text-lg font-semibold text-gray-800`}>

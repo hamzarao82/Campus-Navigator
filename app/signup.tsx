@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   Image,
   Alert,
   ActivityIndicator,
@@ -110,122 +111,148 @@ export default function SignupScreen() {
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
       <KeyboardAvoidingView
-        style={tw`flex-1 px-6 pb-8`}
+        style={tw`flex-1`}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
-        {/* Back Button */}
-        <View style={tw`h-12 justify-center`}>
+        <ScrollView
+          contentContainerStyle={tw`flex-grow px-6 pb-8`}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Back Button */}
+          <View style={tw`h-12 justify-center`}>
+            <TouchableOpacity
+              style={tw`w-10 h-10 items-center justify-center mt-2`}
+              onPress={() => router.replace("/login")}
+            >
+              <Ionicons name="chevron-back" size={22} color="#2258A2" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Logo */}
+          <View style={tw`items-center mb-4`}>
+            <Image
+              source={require("../assets/images/login logo.png")}
+              style={tw`w-24 h-24`}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Title */}
+          <Text style={tw`text-2xl font-bold text-blue-600 mb-6`}>Sign Up</Text>
+
+          {/* Inputs */}
+          <TextInput
+            style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-4 text-gray-900`}
+            placeholder="Full Name"
+            placeholderTextColor="#999"
+            value={fullName}
+            onChangeText={setFullName}
+          />
+          <DropDownPicker
+            open={open}
+            value={role}
+            items={items}
+            setOpen={setOpen}
+            setValue={setRole}
+            setItems={setItems}
+            placeholder="Select your role"
+            listMode="SCROLLVIEW"
+            scrollViewProps={{
+              nestedScrollEnabled: true,
+            }}
+            style={tw`bg-gray-100 border border-gray-200 rounded-xl mb-4`}
+          />
+          <TextInput
+            style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-4 text-gray-900`}
+            placeholder="Email"
+            placeholderTextColor="#999"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+
+          {/* Password Input with Eye Icon */}
+          <View style={tw`flex-row items-center bg-gray-100 rounded-xl px-4 mb-4`}>
+            <TextInput
+              style={tw`flex-1 py-3 text-gray-900`}
+              placeholder="Password"
+              placeholderTextColor="#999"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color="#2563EB"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Confirm Password Input with Eye Icon */}
+          <View style={tw`flex-row items-center bg-gray-100 rounded-xl px-4 mb-4`}>
+            <TextInput
+              style={tw`flex-1 py-3 text-gray-900`}
+              placeholder="Confirm Password"
+              placeholderTextColor="#999"
+              secureTextEntry={!showConfirmPassword}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+              <Ionicons
+                name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color="#2563EB"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Terms */}
           <TouchableOpacity
-            style={tw`w-10 h-10 items-center justify-center mt-2`}
+            style={tw`flex-row items-center mb-6`}
+            onPress={() => setAgreeTerms(!agreeTerms)}
+          >
+            <Ionicons
+              name={agreeTerms ? "checkbox" : "square-outline"}
+              size={20}
+              color="#2563EB"
+            />
+            <Text style={tw`ml-2 text-sm text-gray-700`}>
+              I agree with Terms & Conditions
+            </Text>
+          </TouchableOpacity>
+
+          {/* Button */}
+          <TouchableOpacity
+            style={tw`bg-blue-600 py-4 rounded-2xl mb-4`}
+            onPress={handleSignup}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={tw`text-white text-center text-lg font-semibold`}>
+                Sign Up
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Login Link */}
+          <TouchableOpacity
+            style={tw`items-center mb-4`}
             onPress={() => router.replace("/login")}
           >
-            <Ionicons name="chevron-back" size={22} color="#2258A2" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Logo */}
-        <View style={tw`items-center`}>
-          <Image
-            source={require("../assets/images/login logo.png")}
-            style={tw`w-24 h-24`}
-            resizeMode="contain"
-          />
-        </View>
-
-        {/* Title */}
-        <Text style={tw`text-2xl font-bold text-blue-600 mb-6`}>Sign Up</Text>
-
-        {/* Inputs */}
-        <TextInput
-          style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-4`}
-          placeholder="Full Name"
-          value={fullName}
-          onChangeText={setFullName}
-        />
-        <DropDownPicker
-          open={open}
-          value={role}
-          items={items}
-          setOpen={setOpen}
-          setValue={setRole}
-          setItems={setItems}
-          placeholder="Select your role"
-          style={tw`bg-gray-100 border border-gray-200 rounded-xl mb-4`}
-        />
-        <TextInput
-          style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-4`}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-
-        {/* Password Input with Eye Icon */}
-        <View style={tw`flex-row items-center bg-gray-100 rounded-xl px-4 mb-4`}>
-          <TextInput
-            style={tw`flex-1 py-3`}
-            placeholder="Password"
-            secureTextEntry={!showPassword}
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Ionicons
-              name={showPassword ? "eye-off-outline" : "eye-outline"}
-              size={20}
-              color="#2563EB"
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Confirm Password Input with Eye Icon */}
-        <View style={tw`flex-row items-center bg-gray-100 rounded-xl px-4 mb-4`}>
-          <TextInput
-            style={tw`flex-1 py-3`}
-            placeholder="Confirm Password"
-            secureTextEntry={!showConfirmPassword}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          />
-          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-            <Ionicons
-              name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
-              size={20}
-              color="#2563EB"
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Terms */}
-        <TouchableOpacity
-          style={tw`flex-row items-center mb-6`}
-          onPress={() => setAgreeTerms(!agreeTerms)}
-        >
-          <Ionicons
-            name={agreeTerms ? "checkbox" : "square-outline"}
-            size={20}
-            color="#2563EB"
-          />
-          <Text style={tw`ml-2 text-sm text-gray-700`}>
-            I agree with Terms & Conditions
-          </Text>
-        </TouchableOpacity>
-
-        {/* Button */}
-        <TouchableOpacity
-          style={tw`bg-blue-600 py-4 rounded-2xl`}
-          onPress={handleSignup}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={tw`text-white text-center text-lg font-semibold`}>
-              Sign Up
+            <Text style={tw`text-sm text-gray-600`}>
+              Already have an account?{" "}
+              <Text style={tw`text-blue-600 font-semibold`}>Login</Text>
             </Text>
-          )}
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

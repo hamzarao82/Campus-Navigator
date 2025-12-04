@@ -139,7 +139,6 @@ export default function StudentTimetableScreen_NoGap() {
                 ]}
               >
                 <Text
-                  includeFontPadding={false}
                   style={[
                     tw`text-xs font-medium`,
                     selectedDay === day ? tw`text-white` : tw`text-gray-700`,

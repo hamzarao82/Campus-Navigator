@@ -14,37 +14,43 @@ export default function FacultyDashboard() {
     {
       title: "Campus Map",
       route: "/features/maps",
-      icon: <Ionicons name="map-outline" size={22} color="#2563EB" />,
+      iconLib: Ionicons,
+      iconName: "map-outline",
       description: "View campus layout",
     },
     {
       title: "Manage POI",
       route: "/features/manage-poi",
-      icon: <Feather name="map-pin" size={22} color="#2563EB" />,
+      iconLib: Ionicons,
+      iconName: "location-outline",
       description: "Edit points of interest",
     },
     {
       title: "Course Management",
       route: "/features/course-schedule",
-      icon: <MaterialCommunityIcons name="book-open-outline" size={22} color="#2563EB" />,
+      iconLib: Ionicons,
+      iconName: "book-outline",
       description: "Manage your courses",
     },
     {
       title: "Notifications",
       route: "/features/notifications",
-      icon: <Ionicons name="notifications-outline" size={22} color="#2563EB" />,
+      iconLib: Ionicons,
+      iconName: "notifications-outline",
       description: "Send announcements",
     },
     {
       title: "Profile",
       route: "/faculty/faculty-profile",
-      icon: <Feather name="user" size={22} color="#2563EB" />,
+      iconLib: Ionicons,
+      iconName: "person-outline",
       description: "Update your profile",
     },
     {
-      title: "Setting",
+      title: "Settings",
       route: "/features/settings",
-      icon: <Feather name="settings" size={22} color="#2563EB" />,
+      iconLib: Ionicons,
+      iconName: "settings-outline",
       description: "System configuration",
     },
   ];
@@ -81,22 +87,25 @@ export default function FacultyDashboard() {
       </View>
 
       {/* Menu */}
-      <ScrollView style={tw`px-6 pt-4`} showsVerticalScrollIndicator={false}>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={tw`flex-row items-center bg-white rounded-2xl p-4 mb-3 border border-gray-100 shadow-sm`}
-            onPress={() => router.push(item.route)}
-          >
-            <View style={tw`w-12 h-12 rounded-full bg-blue-100 items-center justify-center mr-4`}>
-              {item.icon}
-            </View>
-            <View style={tw`flex-1`}>
-              <Text style={tw`text-lg font-semibold text-gray-800`}>{item.title}</Text>
-              <Text style={tw`text-sm text-gray-500`}>{item.description}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+      <ScrollView style={tw`px-6 pt-4`} showsVerticalScrollIndicator={false} contentContainerStyle={tw`pb-10`}>
+        {menuItems.map((item, index) => {
+          const IconComponent = item.iconLib;
+          return (
+            <TouchableOpacity
+              key={index}
+              style={tw`flex-row items-center bg-white rounded-2xl p-4 mb-3 border border-gray-100 shadow-sm`}
+              onPress={() => router.push(item.route as any)}
+            >
+              <View style={tw`w-12 h-12 rounded-full bg-blue-100 items-center justify-center mr-4`}>
+                <IconComponent name={item.iconName as any} size={22} color="#2563EB" />
+              </View>
+              <View style={tw`flex-1`}>
+                <Text style={tw`text-lg font-semibold text-gray-800`}>{item.title}</Text>
+                <Text style={tw`text-sm text-gray-500`}>{item.description}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
