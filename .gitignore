@@ -45,3 +45,6 @@ app-example
 # Firebase config (contains sensitive API keys)
 firebaseConfig.ts
 permissions-firebase.md
+
+# Tailwind config
+tailwind.config.ts
