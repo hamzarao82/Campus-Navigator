@@ -39,7 +39,8 @@ const Icons = {
   Position: '📍',
   Exit: '🚪',
   Play: '▶️',
-  Stop: '⏹️'
+  Stop: '⏹️',
+  Indoor: '🏛️',
 };
 
 export default function MapNavigation() {
@@ -715,6 +716,23 @@ export default function MapNavigation() {
               >
                 <Text style={tw`text-white text-lg mr-2`}>🏢</Text>
                 <Text style={tw`text-white font-semibold`}>Manage Campus POIs</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Indoor Map Button */}
+            <View style={tw`px-5 py-2`}>
+              <TouchableOpacity
+                style={tw`flex-row items-center justify-center bg-orange-500 rounded-xl py-3 px-4`}
+                onPress={() => {
+                  Alert.alert(
+                    'Indoor Map',
+                    'Indoor map not available, check map updates',
+                    [{ text: 'OK' }]
+                  );
+                }}
+              >
+                <Text style={tw`text-white text-lg mr-2`}>{Icons.Indoor}</Text>
+                <Text style={tw`text-white font-semibold`}>Indoor Map</Text>
               </TouchableOpacity>
             </View>
 

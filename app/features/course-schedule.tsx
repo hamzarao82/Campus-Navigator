@@ -83,7 +83,7 @@ export default function CourseScheduleScreen() {
       {/* Header */}
       <View style={tw`flex-row justify-between items-center px-6 py-4`}>
         <TouchableOpacity style={tw`p-2 bg-gray-100 rounded-full`}
-        onPress={() => router.back()}>
+          onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="black" />
         </TouchableOpacity>
         <Text style={tw`text-xl font-bold text-black`}>Course Schedule</Text>
@@ -116,7 +116,7 @@ export default function CourseScheduleScreen() {
                 key={field}
                 style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-3 text-black`}
                 placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                value={(editingCourse ? editingCourse[field] : newCourse[field]).toString()}
+                value={(editingCourse ? editingCourse[field as keyof typeof editingCourse] : newCourse[field as keyof typeof newCourse]).toString()}
                 onChangeText={text =>
                   editingCourse
                     ? setEditingCourse({ ...editingCourse, [field]: text })
@@ -162,8 +162,10 @@ export default function CourseScheduleScreen() {
                   <Text style={tw`text-sm text-gray-600`}>{course.name}</Text>
                 </View>
                 <View
-                  style={tw`px-3 py-1 rounded-full`}
-                  className={`bg-${course.status === "Active" ? "green" : "yellow"}-100`}
+                  style={[
+                    tw`px-3 py-1 rounded-full`,
+                    course.status === "Active" ? tw`bg-green-100` : tw`bg-yellow-100`
+                  ]}
                 >
                   <Text style={tw`text-xs text-gray-800`}>{course.status}</Text>
                 </View>

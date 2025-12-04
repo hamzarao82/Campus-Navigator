@@ -71,7 +71,7 @@ export default function StudentTimetableScreen_NoGap() {
     <SafeAreaView style={tw`flex-1 bg-white`}>
       {/* Header */}
       <View
-        style={tw`flex-row items-center justify-between px-4 py-3 border-b border-gray-100`}
+        style={tw`flex-row items-center justify-between px-4 py-3`}
       >
         <TouchableOpacity
           style={tw`w-9 h-9 rounded-full bg-transparent items-center justify-center`}

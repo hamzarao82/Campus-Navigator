@@ -39,11 +39,11 @@ export default function SettingsScreen() {
     },
   });
 
-  const handleSettingChange = (category, setting, value) => {
+  const handleSettingChange = (category: string, setting: string, value: any) => {
     setSettings((prev) => ({
       ...prev,
       [category]: {
-        ...prev[category],
+        ...prev[category as keyof typeof prev],
         [setting]: value,
       },
     }));
@@ -130,7 +130,7 @@ export default function SettingsScreen() {
               <View
                 style={tw`w-11 h-11 rounded-full items-center justify-center mr-3`}
               >
-                <Ionicons name={section.icon} size={24} color={section.color} />
+                <Ionicons name={section.icon as any} size={24} color={section.color} />
               </View>
               <Text style={tw`text-lg font-semibold text-gray-800`}>
                 {section.title}
@@ -144,9 +144,8 @@ export default function SettingsScreen() {
               {section.settings.map((item, i) => (
                 <View
                   key={item.name}
-                  style={tw`flex-row items-center justify-between py-3 border-b ${
-                    i === section.settings.length - 1 ? "border-transparent" : "border-gray-100"
-                  }`}
+                  style={tw`flex-row items-center justify-between py-3 border-b ${i === section.settings.length - 1 ? "border-transparent" : "border-gray-100"
+                    }`}
                 >
                   <View style={tw`flex-1 mr-3`}>
                     <Text style={tw`text-base text-gray-900 font-medium`}>
@@ -156,7 +155,7 @@ export default function SettingsScreen() {
 
                   {item.type === "switch" ? (
                     <Switch
-                      value={Boolean(settings[section.category][item.name])}
+                      value={Boolean((settings as any)[section.category][item.name])}
                       onValueChange={(value) =>
                         handleSettingChange(section.category, item.name, value)
                       }
@@ -165,7 +164,7 @@ export default function SettingsScreen() {
                         true: `${section.color}55`,
                       }}
                       thumbColor={
-                        settings[section.category][item.name]
+                        (settings as any)[section.category][item.name]
                           ? section.color
                           : "#f9fafb"
                       }
@@ -173,7 +172,7 @@ export default function SettingsScreen() {
                   ) : (
                     <TextInput
                       style={tw`bg-gray-100 text-gray-900 rounded-xl px-3 py-2 text-center w-20`}
-                      value={String(settings[section.category][item.name])}
+                      value={String((settings as any)[section.category][item.name])}
                       onChangeText={(value) =>
                         handleSettingChange(section.category, item.name, value)
                       }

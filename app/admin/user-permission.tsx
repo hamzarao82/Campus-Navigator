@@ -230,7 +230,7 @@ export default function UserPermissionsScreen() {
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
       {/* Header */}
-      <View style={tw`flex-row items-center justify-between px-4 py-3 border-b border-gray-200`}>
+      <View style={tw`flex-row items-center justify-between px-4 py-3`}>
         <TouchableOpacity
           style={tw`w-10 h-10 rounded-full bg-gray-100 items-center justify-center`}
           onPress={() => router.back()}
