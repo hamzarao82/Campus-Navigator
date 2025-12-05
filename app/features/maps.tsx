@@ -17,7 +17,7 @@ import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
 import tw from 'twrnc';
 import { router, useLocalSearchParams } from 'expo-router';
-import { db } from '@/firebaseConfig';
+import { db } from '../../firebaseConfig';
 import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const { width } = Dimensions.get('window');

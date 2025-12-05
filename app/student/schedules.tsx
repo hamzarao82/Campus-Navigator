@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, Feather, Entypo, FontAwesome } from "@expo/vector-icons";
 import tw from "twrnc";
 import { router } from "expo-router";
-import { db, auth } from "@/firebaseConfig";
+import { db, auth } from "../../firebaseConfig";
 import { collection, onSnapshot, doc, updateDoc, arrayUnion, getDoc, setDoc, increment } from "firebase/firestore";
 
 interface Course {

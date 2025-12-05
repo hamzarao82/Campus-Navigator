@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import tw from "twrnc";
 import { Ionicons, MaterialIcons, Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { db } from "@/firebaseConfig";
+import { db } from "../../firebaseConfig";
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, serverTimestamp } from "firebase/firestore";
 
 interface Course {

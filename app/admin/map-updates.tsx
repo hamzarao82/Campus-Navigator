@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, Feather, Entypo, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import tw from "twrnc";
-import { db } from "@/firebaseConfig";
+import { db } from "../../firebaseConfig";
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
 
 // Dummy data as fallback

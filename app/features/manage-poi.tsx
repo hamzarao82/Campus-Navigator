@@ -21,7 +21,7 @@ import {
   FontAwesome5,
 } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { db } from "@/firebaseConfig";
+import { db } from "../../firebaseConfig";
 import {
   collection,
   addDoc,
@@ -315,8 +315,8 @@ export default function ManagePOIScreen() {
             <TouchableOpacity
               key={status}
               style={tw`px-4 py-2 rounded-full ${formData.status === status
-                  ? "bg-blue-500"
-                  : "bg-gray-200"
+                ? "bg-blue-500"
+                : "bg-gray-200"
                 }`}
               onPress={() => setFormData({ ...formData, status })}
             >
