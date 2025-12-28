@@ -32,7 +32,7 @@
       "package": "com.hamzarao82.CampusNavigator",
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyAeB7xegJ9zRkgyFznAXaRPuWNllYcZkv0"
+          "apiKey": "GOOGLE_MAPS_API_KEY" //enter your api key here
         }
       }
     },
