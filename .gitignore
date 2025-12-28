@@ -41,3 +41,14 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Firebase permissions doc
+permissions-firebase.md
+
+# Environment variables (contains sensitive API keys)
+.env
+.env.local
+.env.production
+
+# Tailwind config
+tailwind.config.ts
