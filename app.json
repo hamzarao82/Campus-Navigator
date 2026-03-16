@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "jsEngine": "hermes",
       "supportsTablet": true,
       "bundleIdentifier": "com.hamzarao82.CampusNavigator",
       "infoPlist": {
@@ -17,6 +18,7 @@
       }
     },
     "android": {
+      "jsEngine": "hermes",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -59,6 +61,18 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Campus Navigator to access your location for campus navigation and real-time directions."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "shrinkResources": true
+          },
+          "ios": {
+            "useFrameworks": "static"
+          }
         }
       ]
     ],

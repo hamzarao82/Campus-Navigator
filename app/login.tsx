@@ -10,13 +10,14 @@ import {
   Image,
   Modal,
   Alert,
-  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import tw from "twrnc";
 import { auth, db } from "../firebaseConfig";
+import { FormInput } from "../components/ui/atoms/FormInput";
+import { PrimaryButton } from "../components/ui/atoms/PrimaryButton";
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -187,21 +188,17 @@ export default function LoginScreen() {
             Please sign in to continue
           </Text>
 
-          <View style={tw`mb-4`}>
-            <Text style={tw`text-sm font-medium text-gray-700 mb-1`}>Email</Text>
-            <TextInput
-              style={tw`bg-gray-100 rounded-xl px-4 py-3`}
-              placeholder="Your email address"
-              placeholderTextColor="#999"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
+          <FormInput 
+            label="Email"
+            placeholder="Your email address"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
 
           <View style={tw`mb-4`}>
-            <Text style={tw`text-sm font-medium text-gray-700 mb-1`}>Password</Text>
+            <Text style={tw`text-sm font-medium text-gray-700 mb-2`}>Password</Text>
             <View style={tw`flex-row items-center bg-gray-100 rounded-xl px-4`}>
               <TextInput
                 style={tw`flex-1 py-3 text-gray-900`}
@@ -242,19 +239,12 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={tw`bg-blue-600 py-4 rounded-2xl mt-2`}
+          <PrimaryButton 
+            title="Login"
             onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={tw`text-white text-center text-lg font-semibold`}>
-                Login
-              </Text>
-            )}
-          </TouchableOpacity>
+            loading={loading}
+            style={tw`mt-2`}
+          />
 
           <TouchableOpacity
             style={tw`mt-8 items-center`}
@@ -283,22 +273,17 @@ export default function LoginScreen() {
             <Text style={tw`text-sm text-gray-600 mb-4`}>
               Enter your email address to receive a password reset link.
             </Text>
-            <TextInput
-              style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-4`}
+            <FormInput
               placeholder="Enter your email"
-              placeholderTextColor="#999"
               keyboardType="email-address"
               value={resetEmail}
               onChangeText={setResetEmail}
             />
-            <TouchableOpacity
-              style={tw`bg-blue-600 py-3 rounded-xl mb-3`}
+            <PrimaryButton 
+              title="Send Reset Link"
               onPress={handlePasswordReset}
-            >
-              <Text style={tw`text-white text-center font-semibold`}>
-                Send Reset Link
-              </Text>
-            </TouchableOpacity>
+              style={tw`mb-3 py-3`}
+            />
             <TouchableOpacity onPress={() => setModalVisible(false)}>
               <Text style={tw`text-center text-gray-600 font-medium`}>Cancel</Text>
             </TouchableOpacity>
