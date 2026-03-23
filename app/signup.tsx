@@ -9,7 +9,6 @@ import {
   ScrollView,
   Image,
   Alert,
-  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -17,6 +16,8 @@ import DropDownPicker from "react-native-dropdown-picker";
 import tw from "twrnc";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../firebaseConfig";
+import { FormInput } from "../components/ui/atoms/FormInput";
+import { PrimaryButton } from "../components/ui/atoms/PrimaryButton";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
@@ -143,12 +144,11 @@ export default function SignupScreen() {
           <Text style={tw`text-2xl font-bold text-blue-600 mb-6`}>Sign Up</Text>
 
           {/* Inputs */}
-          <TextInput
-            style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-4 text-gray-900`}
+          <FormInput
             placeholder="Full Name"
-            placeholderTextColor="#999"
             value={fullName}
             onChangeText={setFullName}
+            containerStyle={tw`mb-4`}
           />
           <DropDownPicker
             open={open}
@@ -164,14 +164,13 @@ export default function SignupScreen() {
             }}
             style={tw`bg-gray-100 border border-gray-200 rounded-xl mb-4`}
           />
-          <TextInput
-            style={tw`bg-gray-100 rounded-xl px-4 py-3 mb-4 text-gray-900`}
+          <FormInput
             placeholder="Email"
-            placeholderTextColor="#999"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            containerStyle={tw`mb-4`}
           />
 
           {/* Password Input with Eye Icon */}
@@ -228,19 +227,12 @@ export default function SignupScreen() {
           </TouchableOpacity>
 
           {/* Button */}
-          <TouchableOpacity
-            style={tw`bg-blue-600 py-4 rounded-2xl mb-4`}
+          <PrimaryButton 
+            title="Sign Up"
             onPress={handleSignup}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={tw`text-white text-center text-lg font-semibold`}>
-                Sign Up
-              </Text>
-            )}
-          </TouchableOpacity>
+            loading={loading}
+            style={tw`mb-4`}
+          />
 
           {/* Login Link */}
           <TouchableOpacity

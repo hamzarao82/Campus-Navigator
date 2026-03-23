@@ -12,60 +12,19 @@ import { Ionicons, Feather, Entypo, FontAwesome5 } from "@expo/vector-icons";
 import tw from "twrnc";
 import { router } from "expo-router";
 
-const timetableData = [
-  {
-    id: 1,
-    studentName: "Alice Johnson",
-    studentId: "STU001",
-    courses: [
-      {
-        code: "CS101",
-        name: "Introduction to Computer Science",
-        day: "Monday",
-        time: "10:00 AM - 11:30 AM",
-        room: "Room 201",
-        instructor: "Dr. Sarah Johnson",
-      },
-      {
-        code: "MATH201",
-        name: "Advanced Calculus",
-        day: "Tuesday",
-        time: "2:00 PM - 3:30 PM",
-        room: "Room 305",
-        instructor: "Prof. Michael Smith",
-      },
-    ],
-  },
-  {
-    id: 2,
-    studentName: "Bob Wilson",
-    studentId: "STU002",
-    courses: [
-      {
-        code: "ENG102",
-        name: "Academic Writing",
-        day: "Wednesday",
-        time: "1:00 PM - 2:30 PM",
-        room: "Room 102",
-        instructor: "Dr. Emily Brown",
-      },
-      {
-        code: "PHYS101",
-        name: "Physics Fundamentals",
-        day: "Thursday",
-        time: "11:00 AM - 12:30 PM",
-        room: "Lab 203",
-        instructor: "Dr. James Wilson",
-      },
-    ],
-  },
-];
+import { useAdminTimetable } from "../../hooks/useAdminTimetable";
+import { TimetableAdminCard } from "../../components/ui/molecules/TimetableAdminCard";
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 export default function StudentTimetableScreen_NoGap() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDay, setSelectedDay] = useState("Monday");
+  const { timetableData, loading } = useAdminTimetable();
+
+  const handleViewAll = (student: any) => {
+    alert(`View all classes for ${student.studentName}`);
+  };
 
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
@@ -154,85 +113,14 @@ export default function StudentTimetableScreen_NoGap() {
 
         {/* Timetable Cards */}
         <View style={tw`mt-1`}>
-          {timetableData.map((student) => {
-            const filteredCourses = student.courses.filter(
-              (c) => c.day === selectedDay
-            );
-
-            return (
-              <View
-                key={student.id}
-                style={tw`bg-white rounded-2xl border border-gray-100 p-3 mb-3`}
-              >
-                {/* Student Header */}
-                <View style={tw`flex-row justify-between items-center mb-2`}>
-                  <View>
-                    <Text style={tw`text-sm font-semibold text-gray-900`}>
-                      {student.studentName}
-                    </Text>
-                    <Text style={tw`text-xs text-gray-500`}>
-                      {student.studentId}
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    style={tw`px-3 py-1 bg-blue-100 rounded-full`}
-                    onPress={() =>
-                      alert(`View all classes for ${student.studentName}`)
-                    }
-                  >
-                    <Text style={tw`text-blue-600 text-xs font-medium`}>
-                      View All
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Courses */}
-                {filteredCourses.length > 0 ? (
-                  filteredCourses.map((course, idx) => (
-                    <View key={idx} style={tw`border-t border-gray-200 pt-2 mt-2`}>
-                      <Text
-                        style={tw`text-sm font-semibold text-gray-900`}
-                      >{`${course.code} — ${course.name}`}</Text>
-
-                      <View style={tw`mt-1`}>
-                        <View style={tw`flex-row items-center`}>
-                          <Feather name="clock" size={12} color="#6b7280" />
-                          <Text style={tw`text-xs text-gray-600 ml-1`}>
-                            {course.time}
-                          </Text>
-                        </View>
-
-                        <View style={tw`flex-row items-center mt-1`}>
-                          <Entypo name="location-pin" size={13} color="#6b7280" />
-                          <Text style={tw`text-xs text-gray-600 ml-1`}>
-                            {course.room}
-                          </Text>
-                        </View>
-
-                        <View style={tw`flex-row items-center mt-1`}>
-                          <FontAwesome5
-                            name="user-graduate"
-                            size={11}
-                            color="#6b7280"
-                          />
-                          <Text style={tw`text-xs text-gray-600 ml-1`}>
-                            {course.instructor}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  ))
-                ) : (
-                  <View style={tw`py-3 items-center`}>
-                    <Text style={tw`text-gray-400 text-xs`}>
-                      No classes scheduled for {selectedDay}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
+          {timetableData.map((student) => (
+            <TimetableAdminCard
+              key={student.id}
+              student={student}
+              selectedDay={selectedDay}
+              onViewAll={handleViewAll}
+            />
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>

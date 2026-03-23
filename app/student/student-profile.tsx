@@ -9,29 +9,32 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons, MaterialIcons, FontAwesome5, Entypo } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons, FontAwesome5, Entypo, Feather } from "@expo/vector-icons";
 import tw from "twrnc";
 import { useRouter } from "expo-router";
+import { useUserProfile } from "../../hooks/useUserProfile";
+import { ProfileInfoSection } from "../../components/ui/organisms/ProfileInfoSection";
+import { ActivityIndicator } from "react-native";
 
 export default function StudentProfileScreen() {
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    name: "Hamza Rao",
-    email: "hamza@example.com",
-    phone: "+92 300 1234567",
-    address: "Lahore, Pakistan",
-    studentId: "STU123456",
-    major: "Computer Science",
-    year: "Junior",
-    gpa: "3.8",
-    advisor: "Dr. Sarah Johnson",
-  });
+  const { profileData, loading, saving, isEditing, setIsEditing, handleSave, updateField } = useUserProfile({ role: 'student' });
 
-  const handleSave = () => {
-    setIsEditing(false);
-    Alert.alert("Success", "Profile updated successfully!");
-  };
+  if (loading) {
+    return (
+      <View style={tw`flex-1 justify-center items-center bg-white`}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <View style={tw`flex-1 justify-center items-center bg-white`}>
+        <Text style={tw`text-gray-500`}>Profile not found</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
@@ -49,10 +52,15 @@ export default function StudentProfileScreen() {
         <TouchableOpacity
           style={tw`bg-blue-500 rounded-full px-4 py-2`}
           onPress={() => (isEditing ? handleSave() : setIsEditing(true))}
+          disabled={saving}
         >
-          <Text style={tw`text-white font-medium`}>
-            {isEditing ? "Save" : "Edit"}
-          </Text>
+          {saving ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={tw`text-white font-medium`}>
+              {isEditing ? "Save" : "Edit"}
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -90,109 +98,83 @@ export default function StudentProfileScreen() {
         </View>
 
         {/* Personal Information */}
-        <View style={tw`mb-8`}>
-          <Text style={tw`text-lg font-semibold text-gray-800 mb-3`}>
-            Personal Information
-          </Text>
-          <View style={tw`bg-white rounded-xl shadow p-4`}>
-            {/* Full Name */}
-            <View style={tw`border-b border-gray-200 pb-3 mb-3`}>
-              <Text style={tw`text-gray-500 text-sm mb-1`}>Full Name</Text>
-              {isEditing ? (
-                <TextInput
-                  value={profileData.name}
-                  onChangeText={(text) =>
-                    setProfileData({ ...profileData, name: text })
-                  }
-                  style={tw`bg-gray-100 rounded-md px-3 py-2 text-gray-800`}
-                />
-              ) : (
-                <Text style={tw`text-gray-800`}>{profileData.name}</Text>
-              )}
-            </View>
-
-            {/* Email */}
-            <View style={tw`border-b border-gray-200 pb-3 mb-3`}>
-              <View style={tw`flex-row items-center mb-1`}>
-                <MaterialIcons name="email" size={16} color="gray" />
-                <Text style={tw`ml-2 text-gray-500 text-sm`}>Email</Text>
-              </View>
-              <Text style={tw`text-gray-800`}>{profileData.email}</Text>
-            </View>
-
-            {/* Phone */}
-            <View style={tw`border-b border-gray-200 pb-3 mb-3`}>
-              <View style={tw`flex-row items-center mb-1`}>
-                <Ionicons name="call-outline" size={16} color="gray" />
-                <Text style={tw`ml-2 text-gray-500 text-sm`}>Phone</Text>
-              </View>
-              {isEditing ? (
-                <TextInput
-                  value={profileData.phone}
-                  onChangeText={(text) =>
-                    setProfileData({ ...profileData, phone: text })
-                  }
-                  style={tw`bg-gray-100 rounded-md px-3 py-2 text-gray-800`}
-                  keyboardType="phone-pad"
-                />
-              ) : (
-                <Text style={tw`text-gray-800`}>{profileData.phone}</Text>
-              )}
-            </View>
-
-            {/* Address */}
-            <View>
-              <View style={tw`flex-row items-center mb-1`}>
-                <Entypo name="location-pin" size={16} color="gray" />
-                <Text style={tw`ml-2 text-gray-500 text-sm`}>Address</Text>
-              </View>
-              {isEditing ? (
-                <TextInput
-                  value={profileData.address}
-                  onChangeText={(text) =>
-                    setProfileData({ ...profileData, address: text })
-                  }
-                  style={tw`bg-gray-100 rounded-md px-3 py-2 text-gray-800`}
-                />
-              ) : (
-                <Text style={tw`text-gray-800`}>{profileData.address}</Text>
-              )}
-            </View>
-          </View>
-        </View>
+        <ProfileInfoSection
+          title="Personal Information"
+          fields={[
+            {
+              label: "Full Name",
+              value: profileData.fullName,
+              icon: <Feather name="user" size={16} color="gray" />,
+              isEditing,
+              onChangeText: (text) => updateField("fullName", text),
+            },
+            {
+              label: "Email",
+              value: profileData.email,
+              icon: <MaterialIcons name="email" size={16} color="gray" />,
+              isEditing,
+              editable: false,
+              keyboardType: "email-address",
+            },
+            {
+              label: "Phone",
+              value: profileData.phone || "",
+              icon: <Ionicons name="call-outline" size={16} color="gray" />,
+              isEditing,
+              onChangeText: (text) => updateField("phone", text),
+              keyboardType: "phone-pad",
+            },
+            {
+              label: "Address",
+              value: profileData.address || "",
+              icon: <Entypo name="location-pin" size={16} color="gray" />,
+              isEditing,
+              onChangeText: (text) => updateField("address", text),
+            },
+          ]}
+        />
 
         {/* Student Information */}
-        <View style={tw`mb-8`}>
-          <Text style={tw`text-lg font-semibold text-gray-800 mb-3`}>
-            Student Information
-          </Text>
-          <View style={tw`bg-white rounded-xl shadow p-4`}>
-            {Object.entries({
-              studentId: "Student ID",
-              major: "Major",
-              year: "Year",
-              gpa: "GPA",
-              advisor: "Advisor",
-            }).map(([key, label]) => (
-              <View key={key} style={tw`border-b border-gray-200 pb-3 mb-3`}>
-                <Text style={tw`text-gray-500 text-sm mb-1`}>{label}</Text>
-                {isEditing ? (
-                  <TextInput
-                    value={profileData[key as keyof typeof profileData]}
-                    onChangeText={(text) =>
-                      setProfileData({ ...profileData, [key]: text })
-                    }
-                    style={tw`bg-gray-100 rounded-md px-3 py-2 text-gray-800`}
-                  />
-                ) : (
-                  <Text style={tw`text-gray-800`}>
-                    {profileData[key as keyof typeof profileData]}
-                  </Text>
-                )}
-              </View>
-            ))}
-          </View>
-        </View>
+        <ProfileInfoSection
+          title="Student Information"
+          fields={[
+            {
+              label: "Student ID",
+              value: profileData.studentId || "",
+              icon: <FontAwesome5 name="id-card" size={16} color="gray" />,
+              isEditing,
+              onChangeText: (text) => updateField("studentId", text),
+            },
+            {
+              label: "Major",
+              value: profileData.major || "",
+              icon: <FontAwesome5 name="book" size={16} color="gray" />,
+              isEditing,
+              onChangeText: (text) => updateField("major", text),
+            },
+            {
+              label: "Year",
+              value: profileData.year || "",
+              icon: <FontAwesome5 name="calendar-alt" size={16} color="gray" />,
+              isEditing,
+              onChangeText: (text) => updateField("year", text),
+            },
+            {
+              label: "GPA",
+              value: profileData.gpa || "",
+              icon: <FontAwesome5 name="graduation-cap" size={16} color="gray" />,
+              isEditing,
+              onChangeText: (text) => updateField("gpa", text),
+            },
+            {
+              label: "Advisor",
+              value: profileData.advisor || "",
+              icon: <FontAwesome5 name="chalkboard-teacher" size={16} color="gray" />,
+              isEditing,
+              onChangeText: (text) => updateField("advisor", text),
+            },
+          ]}
+        />
 
         <View style={tw`mb-10`} />
       </ScrollView>

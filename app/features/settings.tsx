@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, Feather, MaterialIcons, Entypo } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import tw from "twrnc";
+import { PageHeader } from "../../components/ui/molecules/PageHeader";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -106,18 +107,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
-      {/* Header */}
-      <View style={tw`flex-row items-center p-5 pb-3`}>
-        <TouchableOpacity
-          style={tw`w-10 h-10 rounded-full bg-transparent items-center justify-center mr-3`}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="chevron-back" size={22} color="#260f8eff" />
-        </TouchableOpacity>
-        <Text style={tw`text-xl font-semibold text-gray-900`}>
-          System Settings
-        </Text>
-      </View>
+      <PageHeader title="System Settings" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

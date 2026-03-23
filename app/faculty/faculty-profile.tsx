@@ -4,25 +4,28 @@ import { Ionicons, FontAwesome5, Feather, MaterialIcons } from '@expo/vector-ico
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import tw from 'twrnc';
+import { useUserProfile } from '../../hooks/useUserProfile';
+import { ProfileInfoSection } from '../../components/ui/organisms/ProfileInfoSection';
 
 export default function FacultyProfileScreen() {
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    name: 'Dr. Sarah Johnson',
-    email: 'sarah.johnson@university.edu',
-    phone: '+1 (555) 987-6543',
-    address: 'Room 301, Science Building',
-    facultyId: 'FAC789012',
-    department: 'Computer Science',
-    position: 'Associate Professor',
-    research: 'Artificial Intelligence, Machine Learning',
-  });
+  const { profileData, loading, saving, isEditing, setIsEditing, handleSave, updateField } = useUserProfile({ role: 'faculty' });
 
-  const handleSave = () => {
-    setIsEditing(false);
-    Alert.alert('Profile Saved', 'Faculty profile updated successfully.');
-  };
+  if (loading) {
+    return (
+      <View style={tw`flex-1 justify-center items-center bg-white`}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <View style={tw`flex-1 justify-center items-center bg-white`}>
+        <Text style={tw`text-gray-500`}>Profile not found</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
@@ -41,10 +44,15 @@ export default function FacultyProfileScreen() {
           <TouchableOpacity
             style={tw`px-4 py-2 rounded-full bg-blue-600`}
             onPress={() => (isEditing ? handleSave() : setIsEditing(true))}
+            disabled={saving}
           >
-            <Text style={tw`text-white text-sm font-medium`}>
-              {isEditing ? 'Save' : 'Edit'}
-            </Text>
+            {saving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={tw`text-white text-sm font-medium`}>
+                {isEditing ? 'Save' : 'Edit'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -82,160 +90,77 @@ export default function FacultyProfileScreen() {
           </View>
 
           {/* Personal Info */}
-          <View style={tw`mb-6`}>
-            <Text style={tw`text-lg font-semibold text-gray-900 mb-3`}>
-              Personal Information
-            </Text>
-            <View style={tw`bg-gray-50 rounded-2xl p-4`}>
-              {/* Full Name */}
-              <View style={tw`mb-4 border-b border-gray-200 pb-2`}>
-                <Text style={tw`text-gray-600 text-sm mb-1`}>Full Name</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={tw`bg-gray-100 p-2 rounded text-gray-900`}
-                    value={profileData.name}
-                    onChangeText={(text) =>
-                      setProfileData({ ...profileData, name: text })
-                    }
-                  />
-                ) : (
-                  <Text style={tw`text-gray-900 text-base`}>{profileData.name}</Text>
-                )}
-              </View>
-
-              {/* Email */}
-              <View style={tw`mb-4 border-b border-gray-200 pb-2`}>
-                <View style={tw`flex-row items-center mb-1`}>
-                  <Feather name="mail" size={16} color="#6b7280" />
-                  <Text style={tw`ml-2 text-gray-600 text-sm`}>Email</Text>
-                </View>
-                <Text style={tw`text-gray-900 text-base`}>{profileData.email}</Text>
-              </View>
-
-              {/* Phone */}
-              <View style={tw`mb-4 border-b border-gray-200 pb-2`}>
-                <View style={tw`flex-row items-center mb-1`}>
-                  <Feather name="phone" size={16} color="#6b7280" />
-                  <Text style={tw`ml-2 text-gray-600 text-sm`}>Phone</Text>
-                </View>
-                {isEditing ? (
-                  <TextInput
-                    style={tw`bg-gray-100 p-2 rounded text-gray-900`}
-                    value={profileData.phone}
-                    onChangeText={(text) =>
-                      setProfileData({ ...profileData, phone: text })
-                    }
-                    keyboardType="phone-pad"
-                  />
-                ) : (
-                  <Text style={tw`text-gray-900 text-base`}>{profileData.phone}</Text>
-                )}
-              </View>
-
-              {/* Address / Office */}
-              <View>
-                <View style={tw`flex-row items-center mb-1`}>
-                  <MaterialIcons name="location-on" size={16} color="#6b7280" />
-                  <Text style={tw`ml-2 text-gray-600 text-sm`}>Office</Text>
-                </View>
-                {isEditing ? (
-                  <TextInput
-                    style={tw`bg-gray-100 p-2 rounded text-gray-900`}
-                    value={profileData.address}
-                    onChangeText={(text) =>
-                      setProfileData({ ...profileData, address: text })
-                    }
-                  />
-                ) : (
-                  <Text style={tw`text-gray-900 text-base`}>{profileData.address}</Text>
-                )}
-              </View>
-            </View>
-          </View>
+          <ProfileInfoSection
+            title="Personal Information"
+            fields={[
+              {
+                label: "Full Name",
+                value: profileData.fullName,
+                icon: <Feather name="user" size={16} color="#6b7280" />,
+                isEditing,
+                onChangeText: (text) => updateField("fullName", text),
+              },
+              {
+                label: "Email",
+                value: profileData.email,
+                icon: <Feather name="mail" size={16} color="#6b7280" />,
+                isEditing,
+                editable: false, 
+                keyboardType: "email-address",
+              },
+              {
+                label: "Phone",
+                value: profileData.phone || "",
+                icon: <Feather name="phone" size={16} color="#6b7280" />,
+                isEditing,
+                onChangeText: (text) => updateField("phone", text),
+                keyboardType: "phone-pad",
+              },
+              {
+                label: "Office",
+                value: profileData.address || "",
+                icon: <MaterialIcons name="location-on" size={16} color="#6b7280" />,
+                isEditing,
+                onChangeText: (text) => updateField("address", text),
+              },
+            ]}
+          />
 
           {/* Faculty Info */}
-          <View style={tw`mb-12`}>
-            <Text style={tw`text-lg font-semibold text-gray-900 mb-3`}>
-              Faculty Information
-            </Text>
-            <View style={tw`bg-gray-50 rounded-2xl p-4`}>
-              {/* Faculty ID */}
-              <View style={tw`mb-4 border-b border-gray-200 pb-2`}>
-                <Text style={tw`text-gray-600 text-sm mb-1`}>Faculty ID</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={tw`bg-gray-100 p-2 rounded text-gray-900`}
-                    value={profileData.facultyId}
-                    onChangeText={(text) =>
-                      setProfileData({ ...profileData, facultyId: text })
-                    }
-                  />
-                ) : (
-                  <Text style={tw`text-gray-900 text-base`}>
-                    {profileData.facultyId}
-                  </Text>
-                )}
-              </View>
-
-              {/* Department */}
-              <View style={tw`mb-4 border-b border-gray-200 pb-2`}>
-                <Text style={tw`text-gray-600 text-sm mb-1`}>Department</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={tw`bg-gray-100 p-2 rounded text-gray-900`}
-                    value={profileData.department}
-                    onChangeText={(text) =>
-                      setProfileData({ ...profileData, department: text })
-                    }
-                  />
-                ) : (
-                  <Text style={tw`text-gray-900 text-base`}>
-                    {profileData.department}
-                  </Text>
-                )}
-              </View>
-
-              {/* Position */}
-              <View style={tw`mb-4 border-b border-gray-200 pb-2`}>
-                <Text style={tw`text-gray-600 text-sm mb-1`}>Position</Text>
-                {isEditing ? (
-                  <TextInput
-                    style={tw`bg-gray-100 p-2 rounded text-gray-900`}
-                    value={profileData.position}
-                    onChangeText={(text) =>
-                      setProfileData({ ...profileData, position: text })
-                    }
-                  />
-                ) : (
-                  <Text style={tw`text-gray-900 text-base`}>
-                    {profileData.position}
-                  </Text>
-                )}
-              </View>
-
-              {/* Research Interests */}
-              <View>
-                <Text style={tw`text-gray-600 text-sm mb-1`}>
-                  Research Interests
-                </Text>
-                {isEditing ? (
-                  <TextInput
-                    style={tw`bg-gray-100 p-2 rounded text-gray-900`}
-                    value={profileData.research}
-                    onChangeText={(text) =>
-                      setProfileData({ ...profileData, research: text })
-                    }
-                    multiline
-                    numberOfLines={3}
-                  />
-                ) : (
-                  <Text style={tw`text-gray-900 text-base`}>
-                    {profileData.research}
-                  </Text>
-                )}
-              </View>
-            </View>
-          </View>
+          <ProfileInfoSection
+            title="Faculty Information"
+            fields={[
+              {
+                label: "Faculty ID",
+                value: profileData.facultyId || "",
+                icon: <FontAwesome5 name="id-badge" size={16} color="#6b7280" />,
+                isEditing,
+                onChangeText: (text) => updateField("facultyId", text),
+              },
+              {
+                label: "Department",
+                value: profileData.department || "",
+                icon: <FontAwesome5 name="building" size={16} color="#6b7280" />,
+                isEditing,
+                onChangeText: (text) => updateField("department", text),
+              },
+              {
+                label: "Position",
+                value: profileData.position || "",
+                icon: <FontAwesome5 name="briefcase" size={16} color="#6b7280" />,
+                isEditing,
+                onChangeText: (text) => updateField("position", text),
+              },
+              {
+                label: "Research Interests",
+                value: profileData.research || "",
+                icon: <FontAwesome5 name="microscope" size={16} color="#6b7280" />,
+                isEditing,
+                onChangeText: (text) => updateField("research", text),
+                multiline: true,
+              },
+            ]}
+          />
         </ScrollView>
       </View>
     </SafeAreaView>
